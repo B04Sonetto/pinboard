@@ -179,7 +179,7 @@
 					<h2 class="font-display text-lg font-extrabold">Newest accounts</h2>
 				</div>
 				<ul class="mt-2 flex flex-col divide-y divide-dashed divide-ink/15">
-					{#each data.users.slice(-6).reverse() as user (user.id)}
+					{#each data.newestUsers as user (user.id)}
 						<li class="flex items-center gap-2.5 py-2">
 							<Avatar name={user.full_name} color={user.avatar_color} size={28} role={user.role} />
 							<div class="min-w-0 flex-1">

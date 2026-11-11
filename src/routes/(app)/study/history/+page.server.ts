@@ -6,7 +6,7 @@ const KINDS: StudyKind[] = ['reviewer', 'summary', 'quiz', 'keywords'];
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const kindParam = url.searchParams.get('kind') ?? '';
 	const kind = KINDS.includes(kindParam as StudyKind) ? (kindParam as StudyKind) : '';
-	const q = (url.searchParams.get('q') ?? '').trim();
+	const q = (url.searchParams.get('q') ?? '').trim().slice(0, 120);
 
 	let generationQuery = locals.supabase
 		.from('ai_generations')
@@ -53,14 +53,12 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		map[item] = 0;
 		return map;
 	}, {});
-	if (!q) {
-		const { data: allKinds } = await locals.supabase
-			.from('ai_generations')
-			.select('kind')
-			.eq('user_id', locals.user!.id);
-		for (const row of (allKinds ?? []) as { kind: StudyKind }[]) {
-			counts[row.kind] = (counts[row.kind] ?? 0) + 1;
-		}
+	const { data: allKinds } = await locals.supabase
+		.from('ai_generations')
+		.select('kind')
+		.eq('user_id', locals.user!.id);
+	for (const row of (allKinds ?? []) as { kind: StudyKind }[]) {
+		counts[row.kind] = (counts[row.kind] ?? 0) + 1;
 	}
 
 	return {

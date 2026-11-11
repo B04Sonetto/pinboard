@@ -12,6 +12,10 @@
 	let saved = $state(untrack(() => initialSaved));
 	let busy = $state(false);
 
+	$effect(() => {
+		saved = initialSaved;
+	});
+
 	async function toggle(event: MouseEvent) {
 		event.preventDefault();
 		event.stopPropagation();

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types';
+	import { page } from '$app/state';
 	import { enhance } from '$app/forms';
 	import Markdown from '$lib/components/Markdown.svelte';
 	import Badge from '$lib/components/Badge.svelte';
@@ -46,7 +47,7 @@
 	const relatedSet = $derived(new Set(data.savedIds));
 	const sourceUrl = $derived(safeHttpUrl(note.source_url));
 	const citation = $derived(
-		citationFor(note, citationStyle, `https://pinboard.local/notes/${note.id}`)
+		citationFor(note, citationStyle, `${page.url.origin}/notes/${note.id}`)
 	);
 	const studyHref = $derived(
 		`/study?notes=${note.id}${note.subject_id ? `&subject=${note.subject_id}` : ''}${note.topic_id ? `&topic=${note.topic_id}` : ''}`
@@ -84,6 +85,10 @@
 	{:else if data.notice === 'returned'}
 		<div class="flex items-center gap-2 rounded-xl border-2 border-[#B42318] bg-[#FFF1EF] px-4 py-3 text-sm font-semibold text-[#8f1c12]">
 			<XCircle size={17} /> Note returned to the author for revision.
+		</div>
+	{:else if data.notice === 'submitted'}
+		<div class="flex items-center gap-2 rounded-xl border-2 border-[#1C7A50] bg-[#EFFBF3] px-4 py-3 text-sm font-semibold text-[#155c3c]">
+			<CheckCircle2 size={17} /> Note submitted. A moderator will review it before it appears community-wide.
 		</div>
 	{:else if data.notice === 'edited'}
 		<div class="flex items-center gap-2 rounded-xl border-2 border-[#1C7A50] bg-[#EFFBF3] px-4 py-3 text-sm font-semibold text-[#155c3c]">
@@ -236,7 +241,7 @@
 				<section class="mt-7">
 					<div class="mb-3 flex items-end justify-between">
 						<div>
-							<p class="kicker">Same subject</p>
+							<p class="kicker">Shared subject or keywords</p>
 							<h2 class="mt-1 font-display text-xl font-extrabold">Related notes</h2>
 						</div>
 						<a href="/notes?subject={note.subject_id}" class="link text-[0.78rem]">See all</a>
@@ -256,12 +261,18 @@
 					<BookmarkButton noteId={note.id} saved={data.saved} />
 					<a href="/api/download/{note.id}" class="btn btn-secondary btn-sm"><Download size={15} /> Download</a>
 				</div>
-				<a href={studyHref} class="btn btn-primary mt-2 w-full">
-					<Sparkles size={16} /> Build study material
-				</a>
-				<p class="mt-2 text-center text-[0.65rem] leading-relaxed text-ink-faint">
-					Uses only the notes you select. AI output is labeled and may omit details.
-				</p>
+				{#if note.status === 'verified'}
+					<a href={studyHref} class="btn btn-primary mt-2 w-full">
+						<Sparkles size={16} /> Build study material
+					</a>
+					<p class="mt-2 text-center text-[0.65rem] leading-relaxed text-ink-faint">
+						Uses only the notes you select. AI output is labeled and may omit details.
+					</p>
+				{:else}
+					<p class="mt-2 rounded-lg border border-dashed border-ink/25 bg-paper px-2.5 py-2 text-center text-[0.68rem] leading-relaxed text-ink-soft">
+						Study material becomes available after a moderator verifies this note.
+					</p>
+				{/if}
 			</div>
 
 			<div class="card p-4">
@@ -348,7 +359,7 @@
 				<div class="card p-4">
 					<p class="kicker !text-[0.6rem]">Author actions</p>
 					<p class="mt-1 text-[0.74rem] leading-relaxed text-ink-soft">
-						{#if note.status === 'submitted'}This note is waiting for moderator review. You can still fix typos or add detail.{:else if note.status === 'verified'}Your note is verified and visible to the community. Propose an update without removing the verified version.{:else}Revise the note based on the feedback above, then submit it as a new version for review.{/if}
+						{#if note.status === 'submitted'}This note is waiting for moderator review. You can still fix typos or add detail.{:else if note.status === 'verified'}Your note is verified and visible to the community. Propose an update without removing the verified version.{:else}Revise the note based on the feedback above, then resubmit it for review.{/if}
 					</p>
 					{#if note.status === 'submitted'}
 						<a href="/notes/{note.id}/edit" class="btn btn-primary btn-sm mt-2 w-full"><PenLine size={14} /> Edit note</a>
@@ -357,7 +368,7 @@
 					{:else}
 						<a href="/notes/new?from={note.id}" class="btn btn-secondary btn-sm mt-2 w-full"><PenLine size={14} /> Submit a revision</a>
 					{/if}
-					{#if note.status !== 'verified'}
+					{#if note.status === 'submitted'}
 						<form method="POST" action="?/delete" use:enhance={({ cancel }) => { if (!confirm('Delete this note permanently?')) { cancel(); return; } return async ({ update }) => { await update(); }; }}>
 							<button type="submit" class="btn btn-ghost btn-sm mt-1 w-full !text-[#B42318]"><Trash2 size={14} /> Delete note</button>
 						</form>

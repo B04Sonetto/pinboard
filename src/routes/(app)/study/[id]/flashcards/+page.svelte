@@ -29,7 +29,10 @@
 		try {
 			const saved = localStorage.getItem(`pinboard_fc_reviews_${generation.id}`);
 			if (saved) {
-				cardReviews = JSON.parse(saved);
+				const parsed: unknown = JSON.parse(saved);
+				if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+					cardReviews = parsed as Record<string, number>;
+				}
 			}
 		} catch {}
 	});
@@ -57,8 +60,8 @@
 			: original.map((_, i) => i)
 	);
 
-	const card = $derived(original[order[position] ?? 0]);
 	const total = $derived(order.length);
+	const card = $derived(total > 0 ? original[order[position] ?? 0] : undefined);
 	const progress = $derived(total ? Math.round(((position + 1) / total) * 100) : 0);
 
 	function toggleDueOnly() {
@@ -73,6 +76,7 @@
 	}
 
 	function go(delta: number) {
+		if (total === 0) return;
 		position = (position + delta + total) % total;
 		flipped = false;
 	}
@@ -154,13 +158,14 @@
 
 	<div class="mx-auto w-full max-w-3xl">
 		<div class="mb-2 flex items-center justify-between font-mono text-[0.62rem] uppercase tracking-[0.08em] text-ink-soft">
-			<span>Card {position + 1} of {total}</span>
+			<span>{total ? `Card ${position + 1} of ${total}` : 'No cards in this review set'}</span>
 			<span>{progress}%</span>
 		</div>
 		<div class="h-2 overflow-hidden rounded-full border-2 border-ink bg-paper">
 			<div class="h-full bg-marigold transition-[width] duration-300" style="width: {progress}%"></div>
 		</div>
 
+		{#if total > 0 && card}
 		<div class="mt-4 [perspective:1600px]">
 			<button
 				type="button"
@@ -206,6 +211,14 @@
 				</div>
 			</button>
 		</div>
+		{:else}
+			<div class="mt-4 rounded-xl border-2 border-dashed border-ink/35 bg-paper-card p-8 text-center">
+				<Clock size={24} class="mx-auto text-ink-faint" />
+				<h2 class="mt-2 font-display text-lg font-extrabold">Nothing due right now</h2>
+				<p class="mt-1 text-[0.78rem] text-ink-soft">You have reviewed every card in this set. Show all cards to keep practicing, or come back later.</p>
+				<button type="button" class="btn btn-secondary btn-sm mt-3" onclick={toggleDueOnly}>Show all cards</button>
+			</div>
+		{/if}
 
 		<div class="mt-4 flex flex-col gap-2 no-print">
 			{#if flipped && card}
@@ -243,9 +256,9 @@
 			{/if}
 
 			<div class="flex items-center justify-between gap-3">
-				<button type="button" class="btn btn-secondary" onclick={() => go(-1)}><ChevronLeft size={16} /> Previous</button>
-				<button type="button" class="btn btn-secondary btn-sm" onclick={flip}>{flipped ? 'Show prompt' : 'Show answer'}</button>
-				<button type="button" class="btn btn-primary" onclick={() => go(1)}>Next <ChevronRight size={16} /></button>
+				<button type="button" class="btn btn-secondary" disabled={total === 0} onclick={() => go(-1)}><ChevronLeft size={16} /> Previous</button>
+				<button type="button" class="btn btn-secondary btn-sm" disabled={total === 0} onclick={flip}>{flipped ? 'Show prompt' : 'Show answer'}</button>
+				<button type="button" class="btn btn-primary" disabled={total === 0} onclick={() => go(1)}>Next <ChevronRight size={16} /></button>
 			</div>
 		</div>
 	</div>

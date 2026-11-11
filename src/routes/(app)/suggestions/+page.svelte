@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types';
+	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
@@ -22,7 +23,15 @@
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
-	let kind = $state<SuggestionKind>('lesson');
+	let kind = $state<SuggestionKind>(
+		untrack(() => {
+			const record = form as { values?: { kind?: string } } | null;
+			const value = record?.values?.kind;
+			return value === 'course' || value === 'subject' || value === 'lesson' || value === 'correction' || value === 'platform'
+				? value
+				: 'lesson';
+		})
+	);
 	let submitting = $state(false);
 
 	const kindOptions: { value: SuggestionKind; label: string; icon: typeof BookOpen; hint: string }[] = [

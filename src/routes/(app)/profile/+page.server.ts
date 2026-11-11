@@ -3,6 +3,7 @@ import type { Actions, PageServerLoad } from './$types';
 import type { Note, Profile, Suggestion } from '$lib/types';
 import { NOTE_CARD_SELECT } from '$lib/server/queries';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
+import { env } from '$env/dynamic/private';
 
 const AVATAR_COLORS = ['#FFD34D', '#A9E5BF', '#BCDCFF', '#FFC3D2', '#DCD0FF', '#FF9C88', '#C9A276'];
 const DEFAULT_COLOR = AVATAR_COLORS[0];
@@ -11,9 +12,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const profile = locals.profile as Profile;
 	const userId = locals.user!.id;
 
-	const [notesResult, bookmarkResult, topicBookmarkResult, attemptResult, generationResult, suggestionResult, departmentResult, programResult] =
+	const [notesResult, notesStatusResult, bookmarkResult, topicBookmarkResult, attemptResult, generationResult, suggestionResult, departmentResult, programResult] =
 		await Promise.all([
 			locals.supabase.from('notes').select(NOTE_CARD_SELECT).eq('author_id', userId).order('created_at', { ascending: false }).limit(60),
+			locals.supabase.from('notes').select('status').eq('author_id', userId),
 			locals.supabase.from('bookmarks').select('*', { count: 'exact', head: true }).eq('user_id', userId),
 			locals.supabase.from('topic_bookmarks').select('*', { count: 'exact', head: true }).eq('user_id', userId),
 			locals.supabase.from('quiz_attempts').select('score, total').eq('user_id', userId).limit(500),
@@ -29,8 +31,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 		]);
 
 	const notes = (notesResult.data ?? []) as unknown as Note[];
-	const statusCounts = notes.reduce<Record<string, number>>((map, note) => {
-		map[note.status] = (map[note.status] ?? 0) + 1;
+	const statusRows = (notesStatusResult.error ? notes : (notesStatusResult.data ?? [])) as {
+		status: string;
+	}[];
+	const statusCounts = statusRows.reduce<Record<string, number>>((map, row) => {
+		map[row.status] = (map[row.status] ?? 0) + 1;
 		return map;
 	}, {});
 	const attempts = (attemptResult.data ?? []) as { score: number; total: number }[];
@@ -50,8 +55,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 		departments: (departmentResult.data ?? []) as { id: string; name: string; short_name: string; color: string }[],
 		programs: (programResult.data ?? []) as { id: string; name: string; code: string; department_id: string }[],
 		avatarColors: AVATAR_COLORS,
+		deleteConfigured: Boolean(env.SUPABASE_SERVICE_ROLE_KEY),
 		stats: {
-			notes: notes.length,
+			notes: statusRows.length,
 			verified: statusCounts.verified ?? 0,
 			submitted: statusCounts.submitted ?? 0,
 			rejected: statusCounts.rejected ?? 0,
@@ -84,6 +90,21 @@ export const actions: Actions = {
 		if (yearLevel && (yearLevel < 1 || yearLevel > 6)) errors.year_level = 'Year level must be between 1 and 6.';
 		if (semester && (semester < 1 || semester > 2)) errors.semester = 'Choose 1st or 2nd semester.';
 
+		if (programId) {
+			if (!departmentId) {
+				errors.program_id = 'Choose a department before selecting a program.';
+			} else {
+				const { data: program } = await locals.supabase
+					.from('programs')
+					.select('id, department_id')
+					.eq('id', programId)
+					.maybeSingle();
+				if (!program || program.department_id !== departmentId) {
+					errors.program_id = 'Choose a program that belongs to your department.';
+				}
+			}
+		}
+
 		if (Object.keys(errors).length) {
 			return fail(400, { error: 'Please fix the highlighted fields.', errors });
 		}
@@ -108,14 +129,29 @@ export const actions: Actions = {
 
 	changePassword: async ({ request, locals }) => {
 		const form = await request.formData();
+		const currentPassword = String(form.get('current_password') ?? '');
 		const password = String(form.get('new_password') ?? '');
 		const confirm = String(form.get('confirm_password') ?? '');
 
+		if (!currentPassword) {
+			return fail(400, { passwordError: 'Enter your current password first.' });
+		}
 		if (password.length < 8) {
 			return fail(400, { passwordError: 'Password must be at least 8 characters long.' });
 		}
 		if (password !== confirm) {
 			return fail(400, { passwordError: 'Passwords do not match.' });
+		}
+
+		const email = locals.user!.email;
+		if (!email) return fail(400, { passwordError: 'This account has no email address to verify.' });
+
+		const { error: verifyError } = await locals.supabase.auth.signInWithPassword({
+			email,
+			password: currentPassword
+		});
+		if (verifyError) {
+			return fail(400, { passwordError: 'Your current password is incorrect.' });
 		}
 
 		const { error } = await locals.supabase.auth.updateUser({ password });

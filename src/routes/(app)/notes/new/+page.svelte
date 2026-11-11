@@ -278,7 +278,7 @@
 							rows="2"
 							required
 							minlength="20"
-							maxlength="400"
+							maxlength="600"
 							placeholder="One or two sentences on what this note covers and who it helps."
 						>{val('summary', data.revision?.summary ?? '')}</textarea>
 					</label>
@@ -323,7 +323,7 @@
 							type="text"
 							name="keywords"
 							placeholder="normalization, 1nf, functional dependency"
-							value={val('keywords', '')}
+							value={val('keywords', data.revision?.keywords?.join(', ') ?? '')}
 						/>
 						<span class="hint mt-1">Comma-separated. Leave blank and we will suggest keywords from your note.</span>
 					</label>
@@ -359,7 +359,7 @@
 					</span>
 					<span class="text-[0.8rem] font-bold">{uploading ? 'Reading the file…' : 'Choose a file or drag it here'}</span>
 					<span class="text-[0.68rem] text-ink-soft">We will prefill the body if it is empty.</span>
-					<input type="file" name="file" accept=".pdf,.docx,.doc,.txt,.md,.markdown,.csv" class="sr-only" onchange={onFileChange} />
+					<input type="file" name="file" accept=".pdf,.docx,.txt,.md,.markdown" class="sr-only" onchange={onFileChange} />
 				</label>
 
 				{#if extractError}
@@ -388,7 +388,7 @@
 				<fieldset class="mt-3 flex flex-col gap-2.5">
 					<legend class="label">Visibility *</legend>
 					<label class="flex cursor-pointer items-start gap-2.5 rounded-lg border-2 border-ink/30 bg-paper p-3 transition has-[:checked]:border-ink has-[:checked]:bg-marigold-soft">
-						<input type="radio" name="visibility" value="community" checked={val('visibility', 'community') === 'community'} class="mt-0.5 h-4 w-4 accent-[#211D31]" />
+						<input type="radio" name="visibility" value="community" checked={val('visibility', data.revision?.visibility ?? 'community') === 'community'} class="mt-0.5 h-4 w-4 accent-[#211D31]" />
 						<span>
 							<span class="flex items-center gap-1.5 text-[0.8rem] font-bold">
 								<span>🌐 Community-wide</span>
@@ -400,7 +400,7 @@
 						</span>
 					</label>
 					<label class="flex cursor-pointer items-start gap-2.5 rounded-lg border-2 border-ink/30 bg-paper p-3 transition has-[:checked]:border-ink has-[:checked]:bg-marigold-soft">
-						<input type="radio" name="visibility" value="department" checked={val('visibility', 'community') === 'department'} class="mt-0.5 h-4 w-4 accent-[#211D31]" />
+						<input type="radio" name="visibility" value="department" checked={val('visibility', data.revision?.visibility ?? 'community') === 'department'} class="mt-0.5 h-4 w-4 accent-[#211D31]" />
 						<span>
 							<span class="flex items-center gap-1.5 text-[0.8rem] font-bold">
 								<span>🔒 Department only</span>

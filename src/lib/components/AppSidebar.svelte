@@ -45,7 +45,10 @@
 		try {
 			const saved = localStorage.getItem('pinboard_pinned_depts');
 			if (saved) {
-				pinnedDeptIds = JSON.parse(saved);
+				const parsed: unknown = JSON.parse(saved);
+				if (Array.isArray(parsed)) {
+					pinnedDeptIds = parsed.filter((id): id is string => typeof id === 'string');
+				}
 			}
 		} catch {
 			// ignore storage errors

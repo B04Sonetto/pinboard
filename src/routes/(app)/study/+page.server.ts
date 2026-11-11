@@ -69,11 +69,14 @@ export const actions: Actions = {
 		}
 		const form = await request.formData();
 		const kind = String(form.get('kind') ?? 'reviewer') as StudyKind;
-		const noteIds = form
-			.getAll('note_ids')
-			.map((value) => String(value))
-			.filter((value) => UUID.test(value))
-			.slice(0, 8);
+		const noteIds = [
+			...new Set(
+				form
+					.getAll('note_ids')
+					.map((value) => String(value))
+					.filter((value) => UUID.test(value))
+			)
+		].slice(0, 8);
 		const ownNotes = String(form.get('own_notes') ?? '').trim().slice(0, 30_000);
 		const focus = String(form.get('focus') ?? '').trim().slice(0, 240);
 		const questionCount = Number.parseInt(String(form.get('question_count') ?? '8'), 10) || 8;

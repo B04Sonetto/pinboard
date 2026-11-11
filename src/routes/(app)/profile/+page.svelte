@@ -308,6 +308,7 @@
 								<option value={program.id}>{program.code} · {program.name}</option>
 							{/each}
 						</select>
+						{#if errors.program_id}<span class="field-error">{errors.program_id}</span>{/if}
 					</label>
 					<label class="flex flex-col">
 						<span class="label">Year level</span>
@@ -424,6 +425,10 @@
 						}}
 					>
 						<label class="flex flex-col">
+							<span class="label !text-[0.68rem]">Current password</span>
+							<PasswordField name="current_password" autocomplete="current-password" placeholder="Current password" inputClass="!min-h-9 !text-xs" />
+						</label>
+						<label class="flex flex-col">
 							<span class="label !text-[0.68rem]">New password</span>
 							<PasswordField name="new_password" autocomplete="new-password" minlength={8} placeholder="At least 8 characters" inputClass="!min-h-9 !text-xs" />
 						</label>
@@ -476,6 +481,11 @@
 					<p class="mt-2 text-[0.7rem] leading-relaxed text-[#6f1a12]">
 						Permanently delete your profile, auth credentials, and personal data. This action cannot be undone.
 					</p>
+					{#if !data.deleteConfigured}
+						<p class="mt-2 rounded-lg border border-[#B42318]/40 bg-white p-2 text-[0.7rem] leading-relaxed text-[#6f1a12]">
+							Deletion is disabled because the server does not have account-deletion credentials configured. Contact an administrator instead.
+						</p>
+					{/if}
 					{#if form && 'deleteError' in form && form.deleteError}
 						<p class="mt-2 text-xs font-semibold text-[#B42318]">{form.deleteError}</p>
 					{/if}
@@ -495,7 +505,7 @@
 							<span class="label !text-[0.66rem] text-[#8f1c12]">Type DELETE to confirm:</span>
 							<input class="input !min-h-9 !text-xs !border-[#B42318]" type="text" name="confirmation" required placeholder="DELETE" />
 						</label>
-						<button type="submit" class="btn btn-danger btn-sm w-full" disabled={deletingAccount}>
+						<button type="submit" class="btn btn-danger btn-sm w-full" disabled={deletingAccount || !data.deleteConfigured}>
 							{#if deletingAccount}<LoaderCircle size={14} class="animate-spin" /> Deleting…{:else}<Trash2 size={14} /> Delete account permanently{/if}
 						</button>
 					</form>

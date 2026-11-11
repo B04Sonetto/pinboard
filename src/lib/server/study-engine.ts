@@ -110,8 +110,12 @@ function level(options: StudyOptions) {
 	return DIFFICULTY[options.difficulty ?? 'standard'] ?? DIFFICULTY.standard;
 }
 
+function noteIdFor(source: StudySource): string | null {
+	return source.id === 'own-notes' ? null : source.id;
+}
+
 function sentenceLink(source: StudySource): string {
-	return `[Read the source note](/notes/${source.id})`;
+	return source.id === 'own-notes' ? 'Your attached notes' : `[Read the source note](/notes/${source.id})`;
 }
 
 function combinedText(sources: StudySource[], options: StudyOptions): string {
@@ -324,7 +328,7 @@ function buildTrueFalse(
 			explanation: replacement
 				? `False. The source actually says: “${truncate(candidate.sentence, 300)}”`
 				: `True. The source says: “${truncate(candidate.sentence, 300)}”`,
-			sourceNoteId: candidate.source.id,
+			sourceNoteId: noteIdFor(candidate.source),
 			sourceTitle: candidate.source.title
 		});
 	}
@@ -365,7 +369,7 @@ function buildFlashcards(questions: QuizQuestion[], sources: StudySource[]): Fla
 				id: `f${cards.length + 1}`,
 				front: term,
 				back: truncate(source.summary || source.content, 240),
-				sourceNoteId: source.id,
+				sourceNoteId: noteIdFor(source),
 				sourceTitle: source.title
 			});
 		}
@@ -426,7 +430,7 @@ function buildQuiz(sources: StudySource[], options: StudyOptions): StudyResult {
 				options: optionTerms.map((term) => term.replace(/\b\w/g, (c) => c.toUpperCase())),
 				answer,
 				explanation: `The source says: “${truncate(candidate.sentence, 300)}”`,
-				sourceNoteId: source.id,
+				sourceNoteId: noteIdFor(source),
 				sourceTitle: source.title
 			});
 			break;
@@ -447,7 +451,7 @@ function buildQuiz(sources: StudySource[], options: StudyOptions): StudyResult {
 					options: optionTerms.map((value) => value.replace(/\b\w/g, (c) => c.toUpperCase())),
 					answer: optionTerms.indexOf(term),
 					explanation: `“${term}” is a key term in ${source.title}.`,
-					sourceNoteId: source.id,
+					sourceNoteId: noteIdFor(source),
 					sourceTitle: source.title
 				});
 			}
@@ -470,7 +474,7 @@ function buildQuiz(sources: StudySource[], options: StudyOptions): StudyResult {
 			const optionsList = question.options
 				.map((option, optionIndex) => `${String.fromCharCode(65 + optionIndex)}. ${option}`)
 				.join('\n');
-			return `## ${index + 1}. ${question.prompt}\n\n${optionsList}\n\n<details>\n<summary>Show answer</summary>\n\n**Answer:** ${String.fromCharCode(65 + question.answer)}. ${question.options[question.answer]}\n\n${question.explanation}${question.sourceNoteId ? ` [Read the source note](/notes/${question.sourceNoteId})` : ''}\n\n</details>\n`;
+			return `## ${index + 1}. ${question.prompt}\n\n${optionsList}\n\n**Answer:** ${String.fromCharCode(65 + question.answer)}. ${question.options[question.answer]}\n\n${question.explanation}${question.sourceNoteId ? ` [Read the source note](/notes/${question.sourceNoteId})` : ''}\n\n`;
 		}),
 		'> Quiz items are machine-generated from community notes and may contain ambiguity. Use them for recall practice, not as an official exam key.'
 	];

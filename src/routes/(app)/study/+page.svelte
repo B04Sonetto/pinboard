@@ -69,6 +69,7 @@
 	const selectedNotes = $derived(
 		selected.map((id) => data.notes.find((note) => note.id === id)).filter((note): note is (typeof data.notes)[number] => Boolean(note))
 	);
+	const canGenerate = $derived(selected.length > 0 || ownNotes.trim().length >= 80);
 
 	function onDepartmentChange() {
 		subject = '';
@@ -289,7 +290,7 @@
 				<p class="flex items-center gap-1.5 text-[0.7rem] text-ink-soft">
 					<Lightbulb size={13} /> Outputs are saved to your generation history.
 				</p>
-				<button type="submit" class="btn btn-primary btn-lg" disabled={submitting || selected.length === 0}>
+				<button type="submit" class="btn btn-primary btn-lg" disabled={submitting || !canGenerate}>
 					{#if submitting}
 						<LoaderCircle size={17} class="animate-spin" /> Building your material…
 					{:else}

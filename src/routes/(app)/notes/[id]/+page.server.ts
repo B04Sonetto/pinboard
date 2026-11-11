@@ -133,6 +133,11 @@ export const actions: Actions = {
 			.eq('id', params.id);
 
 		if (updateError) return fail(400, { actionError: 'Could not verify this note.' });
+		await locals.supabase.rpc('log_moderation_action', {
+			p_action: 'note_verified',
+			p_note: params.id,
+			p_detail: note || null
+		});
 		redirect(303, `/notes/${params.id}?notice=verified`);
 	},
 
@@ -143,12 +148,18 @@ export const actions: Actions = {
 			.from('notes')
 			.update({
 				status: 'rejected',
+				verified_at: null,
 				verified_by: locals.user!.id,
 				moderator_note: note || 'Returned for revision. Add more detail and cite your source.'
 			})
 			.eq('id', params.id);
 
 		if (updateError) return fail(400, { actionError: 'Could not return this note.' });
+		await locals.supabase.rpc('log_moderation_action', {
+			p_action: 'note_rejected',
+			p_note: params.id,
+			p_detail: note || null
+		});
 		redirect(303, `/notes/${params.id}?notice=returned`);
 	}
 };

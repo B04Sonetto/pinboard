@@ -203,7 +203,7 @@
 
 					<label class="flex flex-col">
 						<span class="label">Short summary *</span>
-						<textarea class="textarea" name="summary" rows="2" required minlength="20" maxlength="400">{pick('summary', note.summary ?? '')}</textarea>
+						<textarea class="textarea" name="summary" rows="2" required minlength="20" maxlength="600">{pick('summary', note.summary ?? '')}</textarea>
 					</label>
 
 					<div class="flex flex-col">
@@ -280,7 +280,7 @@
 					</span>
 					<span class="text-[0.8rem] font-bold">{uploading ? 'Reading the file…' : note.file_path ? 'Replace the attachment' : 'Add an attachment'}</span>
 					<span class="text-[0.68rem] text-ink-soft">PDF, DOCX, TXT or Markdown, up to 15 MB.</span>
-					<input type="file" name="file" accept=".pdf,.docx,.doc,.txt,.md,.markdown,.csv" class="sr-only" onchange={onFileChange} />
+					<input type="file" name="file" accept=".pdf,.docx,.txt,.md,.markdown" class="sr-only" onchange={onFileChange} />
 				</label>
 
 				{#if extractError}

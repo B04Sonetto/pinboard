@@ -82,9 +82,11 @@
 	);
 
 	const filteredTopics = $derived(
-		data.filters.subject
-			? data.taxonomy.topics.filter((topic) => topic.subject_id === data.filters.subject)
-			: data.taxonomy.topics
+		data.taxonomy.topics.filter((topic) =>
+			data.filters.subject
+				? topic.subject_id === data.filters.subject
+				: filteredSubjects.some((subject) => subject.id === topic.subject_id)
+		)
 	);
 
 	const hasFilters = $derived(

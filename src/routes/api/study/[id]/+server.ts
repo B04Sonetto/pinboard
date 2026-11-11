@@ -10,12 +10,31 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 	const { data, error: fetchError } = await locals.supabase
 		.from('ai_generations')
-		.select('title, content, created_at')
+		.select('title, content, created_at, source_note_ids')
 		.eq('id', params.id)
 		.eq('user_id', locals.user.id)
 		.maybeSingle();
 
 	if (fetchError || !data) throw error(404, 'Study material not found.');
+
+	const sourceIds = Array.isArray(data.source_note_ids) ? data.source_note_ids.filter(Boolean) : [];
+	let sourceBlock = '';
+	if (sourceIds.length > 0) {
+		const { data: sources } = await locals.supabase
+			.from('notes')
+			.select('id, title, status')
+			.in('id', sourceIds);
+		if (sources?.length) {
+			sourceBlock = [
+				'',
+				'## Sources',
+				'',
+				...sources.map((source) => `- ${source.title} (${source.status.replace('_', ' ')}) — note ${source.id}`),
+				'',
+				'These are community notes, not official university material.'
+			].join('\n');
+		}
+	}
 
 	const header = [
 		data.title,
@@ -27,7 +46,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		''
 	].join('\n');
 
-	return new Response(header + data.content, {
+	return new Response(header + data.content + sourceBlock, {
 		headers: {
 			'content-type': 'text/markdown; charset=utf-8',
 			'content-disposition': `attachment; filename="${sanitizeFileName(data.title)}.md"`,

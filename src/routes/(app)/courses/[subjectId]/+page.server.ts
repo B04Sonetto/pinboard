@@ -28,7 +28,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const subject = subjectData as unknown as SubjectDetail;
 
 	const sort = url.searchParams.get('sort') ?? 'newest';
-	const topic = url.searchParams.get('topic') ?? '';
+	const topicParam = url.searchParams.get('topic') ?? '';
+	const topic = UUID.test(topicParam) ? topicParam : '';
 
 	let notesQuery = supabase.from('notes').select(NOTE_CARD_SELECT).eq('subject_id', subject.id);
 	if (topic) notesQuery = notesQuery.eq('topic_id', topic);

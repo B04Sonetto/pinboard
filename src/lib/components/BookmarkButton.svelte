@@ -14,6 +14,11 @@
 	let saved = $state(untrack(() => initialSaved));
 	let busy = $state(false);
 
+	// The note page can navigate between notes without remounting this button.
+	$effect(() => {
+		saved = initialSaved;
+	});
+
 	async function toggle(event: MouseEvent) {
 		event.preventDefault();
 		event.stopPropagation();

@@ -109,6 +109,20 @@ export const actions: Actions = {
 		const subjectData = subjectRow as Subject | null;
 		if (!subjectData) return fail(400, { error: 'That subject no longer exists.', ...values });
 
+		const userDeptId = locals.profile?.department_id;
+		if (userDeptId && subjectData.department_id !== userDeptId) {
+			return fail(400, {
+				error: 'The selected subject does not belong to your enrolled department.',
+				...values
+			});
+		}
+		if (!userDeptId && department) {
+			await locals.supabase
+				.from('profiles')
+				.update({ department_id: subjectData.department_id })
+				.eq('id', locals.user!.id);
+		}
+
 		if (topic) {
 			const { data: topicRow } = await locals.supabase
 				.from('topics')
@@ -190,6 +204,8 @@ export const actions: Actions = {
 			content_text: stripMarkdown(body),
 			visibility,
 			status: 'submitted',
+			verified_at: null,
+			verified_by: null,
 			moderator_note: null,
 			year_level: yearLevel ?? subjectData.year_level,
 			semester: semester ?? subjectData.semester,

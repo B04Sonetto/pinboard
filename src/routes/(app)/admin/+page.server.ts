@@ -24,6 +24,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	const [
 		usersResult,
+		newestUsersResult,
 		suggestionsResult,
 		roleResult,
 		taxonomy,
@@ -40,6 +41,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.select('id, full_name, role, department_id, program_id, created_at, department:departments(id, name, short_name), program:programs(id, name, code)')
 			.order('created_at', { ascending: true })
 			.limit(300),
+		locals.supabase
+			.from('profiles')
+			.select('id, full_name, role, department_id, program_id, created_at, department:departments(id, name, short_name), program:programs(id, name, code)')
+			.order('created_at', { ascending: false })
+			.limit(6),
 		locals.supabase
 			.from('suggestions')
 			.select('*, user:profiles!suggestions_user_id_fkey(id, full_name, avatar_color, role), subject:subjects(id, code, name)')
@@ -59,6 +65,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.select('id, title, created_at')
 			.eq('status', 'submitted')
 			.order('created_at', { ascending: true })
+			.limit(1)
 			.maybeSingle(),
 		locals.supabase.rpc('top_searches', { p_limit: 8 }),
 		locals.supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'open'),
@@ -78,6 +85,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	return {
 		user: locals.user,
 		users,
+		newestUsers: (newestUsersResult.data ?? []) as unknown as Profile[],
 		suggestions: (suggestionsResult.data ?? []) as unknown as Suggestion[],
 		taxonomy,
 		analytics: {
@@ -177,6 +185,17 @@ export const actions: Actions = {
 		if (name.length < 3 || !code) return fail(400, { error: 'Subject name and code are required.' });
 		if (yearLevel && (yearLevel < 1 || yearLevel > 6)) return fail(400, { error: 'Year level must be 1–6.' });
 		if (semester && (semester < 1 || semester > 2)) return fail(400, { error: 'Semester must be 1 or 2.' });
+
+		if (programId) {
+			const { data: program } = await locals.supabase
+				.from('programs')
+				.select('id, department_id')
+				.eq('id', programId)
+				.maybeSingle();
+			if (!program || program.department_id !== departmentId) {
+				return fail(400, { error: 'Choose a program that belongs to the selected department.' });
+			}
+		}
 
 		const { error: insertError } = await locals.supabase.from('subjects').insert({
 			department_id: departmentId,

@@ -45,11 +45,6 @@ export const load: PageServerLoad = async ({ locals, url, parent }) => {
 	]);
 
 	const freshNotes = (fresh.data ?? []) as unknown as Note[];
-	const savedIds = await savedNoteIds(
-		supabase,
-		locals.user!.id,
-		freshNotes.map((note) => note.id)
-	);
 
 	const bookmarkIds = (bookmarkRows.data ?? []).map((row) => row.note_id as string);
 	let savedNotes: Note[] = [];
@@ -58,6 +53,11 @@ export const load: PageServerLoad = async ({ locals, url, parent }) => {
 		const byId = new Map(((data ?? []) as unknown as Note[]).map((note) => [note.id, note]));
 		savedNotes = bookmarkIds.map((id) => byId.get(id)).filter((note): note is Note => Boolean(note));
 	}
+
+	const savedIds = await savedNoteIds(supabase, locals.user!.id, [
+		...freshNotes.map((note) => note.id),
+		...savedNotes.map((note) => note.id)
+	]);
 
 	const allTopics = (topics.data ?? []) as unknown as TopicWithSubject[];
 	const topicPicks = allTopics

@@ -25,7 +25,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		.select(NOTE_FULL_SELECT, { count: 'exact' })
 		.eq('status', 'submitted');
 	if (department) notesQuery = notesQuery.eq('department_id', department);
-	if (subject) notesQuery = notesQuery.eq('subject_id', subject);
+	if (subject && UUID.test(subject)) notesQuery = notesQuery.eq('subject_id', subject);
 	notesQuery = notesQuery.order('created_at', { ascending: true }).range(from, from + PAGE_SIZE - 1);
 
 	const [notesResult, suggestionsResult, reportsResult, auditResult, verifiedResult, openNotesResult, departmentsResult, subjectsResult] =
@@ -130,7 +130,7 @@ export const actions: Actions = {
 
 		const { error: updateError } = await locals.supabase
 			.from('notes')
-			.update({ status: 'rejected', verified_at: null, verified_by: null, moderator_note: moderatorNote })
+			.update({ status: 'rejected', verified_at: null, verified_by: locals.user!.id, moderator_note: moderatorNote })
 			.eq('id', noteId);
 
 		if (updateError) return fail(400, { error: 'Could not return that note.' });
@@ -228,11 +228,14 @@ export const actions: Actions = {
 				await locals.supabase.storage.from('note-files').remove([note.file_path]);
 			}
 
+			// The note and its report are deleted here (reports cascade), so the
+			// audit row cannot reference either row anymore. Keep the IDs in the
+			// detail text instead of violating the foreign keys.
 			await locals.supabase.rpc('log_moderation_action', {
 				p_action: 'note_removed',
-				p_note: noteId,
-				p_report: reportId,
-				p_detail: `Removed after report ${reportId}.`
+				p_note: null,
+				p_report: null,
+				p_detail: `Removed note ${noteId} after report ${reportId}.`
 			});
 
 			return { success: true, message: 'Reported note removed and report closed.' };
