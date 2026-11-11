@@ -88,7 +88,7 @@
 						name="email"
 						autocomplete="email"
 						required
-						pattern="\\d{4}-\\d{4}@lspu\\.edu\\.ph"
+						pattern="^\d{4}-\d{4}@lspu\.edu\.ph$"
 						title="Use the format 0000-0000@lspu.edu.ph"
 						placeholder="0000-0000@lspu.edu.ph"
 						value={form && 'email' in form ? form.email : ''}

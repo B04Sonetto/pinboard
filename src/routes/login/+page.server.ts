@@ -20,8 +20,8 @@ export const actions: Actions = {
 		const password = String(form.get('password') ?? '');
 		const next = safeNext(String(form.get('next') ?? url.searchParams.get('redirect') ?? ''));
 
-		if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-			return fail(400, { error: 'Enter a valid email address.', email, next });
+		if (!email || !/^\d{4}-\d{4}@lspu\.edu\.ph$/i.test(email)) {
+			return fail(400, { error: 'Use your LSPU student email in the format 0000-0000@lspu.edu.ph.', email, next });
 		}
 		if (!password) {
 			return fail(400, { error: 'Enter your password.', email, next });

@@ -51,7 +51,7 @@
 		<input type="hidden" name="next" value={form?.next ?? data.next} />
 
 		<label class="flex flex-col">
-			<span class="label">Email address</span>
+			<span class="label">LSPU student email</span>
 			<span class="relative">
 				<Mail size={16} class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft" />
 				<input
@@ -61,7 +61,8 @@
 					autocomplete="email"
 					required
 					value={form?.email ?? ''}
-					placeholder="you@university.edu"
+					placeholder="0000-0000@lspu.edu.ph"
+					title="Use the format 0000-0000@lspu.edu.ph"
 				/>
 			</span>
 		</label>
