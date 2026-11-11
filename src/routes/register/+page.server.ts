@@ -7,7 +7,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	return {};
 };
 
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const lspuEmailPattern = /^\d{4}-\d{4}@lspu\.edu\.ph$/;
 
 export const actions: Actions = {
 	default: async ({ request, locals, url }) => {
@@ -24,8 +24,11 @@ export const actions: Actions = {
 		if (fullName.length < 2) {
 			return fail(400, { error: 'Enter your full name so contributors can be credited.', ...values });
 		}
-		if (!emailPattern.test(email)) {
-			return fail(400, { error: 'Enter a valid email address.', ...values });
+		if (!lspuEmailPattern.test(email)) {
+			return fail(400, {
+				error: 'Use your LSPU student email in the format 0000-0000@lspu.edu.ph.',
+				...values
+			});
 		}
 		if (password.length < 8) {
 			return fail(400, { error: 'Use at least 8 characters for your password.', ...values });
