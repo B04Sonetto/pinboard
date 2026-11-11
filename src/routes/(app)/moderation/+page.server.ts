@@ -33,14 +33,15 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			notesQuery,
 			locals.supabase
 				.from('suggestions')
-				.select('*, user:profiles!suggestions_user_id_fkey(id, full_name, avatar_color, role), subject:subjects(id, code, name)')
+				.select('*, user:profiles!suggestions_user_id_fkey(id, full_name, avatar_color, role), subject:subjects(id, code, name)', { count: 'exact' })
 				.in('status', ['open', 'under_review'])
 				.order('created_at', { ascending: true })
 				.limit(50),
 			locals.supabase
 				.from('reports')
 				.select(
-					`id, reason, details, status, created_at, reporter:profiles!reports_reporter_id_fkey(id, full_name, avatar_color, role), note:notes!reports_note_id_fkey(${NOTE_FULL_SELECT})`
+					`id, reason, details, status, created_at, reporter:profiles!reports_reporter_id_fkey(id, full_name, avatar_color, role), note:notes!reports_note_id_fkey(${NOTE_FULL_SELECT})`,
+					{ count: 'exact' }
 				)
 				.eq('status', 'open')
 				.order('created_at', { ascending: true })
@@ -48,7 +49,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			locals.supabase
 				.from('moderation_actions')
 				.select(
-					'id, actor_id, action, note_id, suggestion_id, report_id, detail, created_at, actor:profiles!moderation_actions_actor_id_fkey(id, full_name, avatar_color, role), note:notes!moderation_actions_note_id_fkey(id, title)'
+					'id, actor_id, action, note_id, suggestion_id, report_id, detail, created_at, actor:profiles!moderation_actions_actor_id_fkey(id, full_name, avatar_color, role), note:notes!moderation_actions_note_id_fkey(id, title)',
+					{ count: 'exact' }
 				)
 				.order('created_at', { ascending: false })
 				.limit(30),
@@ -82,8 +84,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		pagination: { total, page, pages: Math.max(1, Math.ceil(total / PAGE_SIZE)) },
 		counts: {
 			notes: openNotesResult.count ?? 0,
-			suggestions: ((suggestionsResult.data ?? []) as unknown[]).length,
-			reports: reports.length,
+			suggestions: suggestionsResult.count ?? ((suggestionsResult.data ?? []) as unknown[]).length,
+			reports: reportsResult.count ?? reports.length,
+			audit: auditResult.count ?? ((auditResult.data ?? []) as unknown[]).length,
 			verified: verifiedResult.count ?? 0
 		}
 	};
