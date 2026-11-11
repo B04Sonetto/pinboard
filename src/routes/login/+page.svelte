@@ -1,11 +1,16 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { untrack } from 'svelte';
 	import type { ActionData } from './$types';
 	import AuthShell from '$lib/components/AuthShell.svelte';
-	import { AlertCircle, ArrowRight, LockKeyhole, Mail } from '@lucide/svelte';
+	import PasswordField from '$lib/components/PasswordField.svelte';
+	import { isLspuStudentEmail } from '$lib/utils';
+	import { AlertCircle, ArrowRight, Mail } from '@lucide/svelte';
 
 	let { data, form }: { data: { next: string; setupRequired: boolean; authError: string | null }; form: ActionData } = $props();
 	let submitting = $state(false);
+	let email = $state(untrack(() => form?.email ?? ''));
+	const emailReady = $derived(isLspuStudentEmail(email));
 	const message = $derived(form?.error ?? data.authError);
 </script>
 
@@ -59,11 +64,21 @@
 					type="email"
 					name="email"
 					autocomplete="email"
+					autocapitalize="none"
+					spellcheck="false"
 					required
-					value={form?.email ?? ''}
-					placeholder="0000-0000@lspu.edu.ph"
-					title="Use the format 0000-0000@lspu.edu.ph"
+					placeholder="0324-0574@lspu.edu.ph"
+					bind:value={email}
 				/>
+			</span>
+			<span class="mt-1.5 text-[0.7rem] leading-snug {email && !emailReady ? 'font-semibold text-[#8f1c12]' : 'text-ink-soft'}">
+				{#if emailReady}
+					<span class="font-semibold text-[#155c3c]">LSPU student email recognized.</span>
+				{:else if email.trim()}
+					Use your student email, like 0324-0574@lspu.edu.ph.
+				{:else}
+					Sign in with your LSPU student email.
+				{/if}
 			</span>
 		</label>
 
@@ -72,17 +87,7 @@
 				<span class="label">Password</span>
 				<a href="/forgot-password" class="mb-1.5 text-[0.7rem] font-semibold text-violet hover:underline">Forgot password?</a>
 			</span>
-			<span class="relative">
-				<LockKeyhole size={16} class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft" />
-				<input
-					class="input !pl-9"
-					type="password"
-					name="password"
-					autocomplete="current-password"
-					required
-					placeholder="Your password"
-				/>
-			</span>
+			<PasswordField name="password" autocomplete="current-password" placeholder="Your password" />
 		</label>
 
 		<button type="submit" class="btn btn-primary btn-lg mt-1 w-full" disabled={submitting}>

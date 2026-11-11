@@ -96,6 +96,17 @@
 	</form>
 
 	<div class="ml-auto flex items-center gap-1.5 sm:gap-2">
+		{#if profile.department}
+			<a
+				href="/notes?department={profile.department.id}"
+				class="hidden md:inline-flex items-center gap-1.5 rounded-lg border-2 border-ink bg-paper-card px-2.5 py-1 text-xs font-bold hover:bg-paper-deep transition"
+				title="View {profile.department.name} Notes"
+			>
+				<span class="h-2 w-2 rounded-full border border-ink" style="background:{profile.department.color || '#FFD34D'}"></span>
+				<span>{profile.department.short_name}</span>
+			</a>
+		{/if}
+
 		<a href="/notes/new" class="btn btn-primary btn-sm hidden sm:inline-flex">
 			<PenLine size={15} />
 			Write

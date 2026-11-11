@@ -2,7 +2,8 @@
 	import { enhance } from '$app/forms';
 	import type { ActionData } from './$types';
 	import AuthShell from '$lib/components/AuthShell.svelte';
-	import { AlertCircle, ArrowRight, LockKeyhole, ShieldCheck } from '@lucide/svelte';
+	import PasswordField from '$lib/components/PasswordField.svelte';
+	import { AlertCircle, ArrowRight, ShieldCheck } from '@lucide/svelte';
 
 	let { data, form }: { data: { email: string }; form: ActionData } = $props();
 	let submitting = $state(false);
@@ -45,33 +46,12 @@
 	>
 		<label class="flex flex-col">
 			<span class="label">New password</span>
-			<span class="relative">
-				<LockKeyhole size={16} class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft" />
-				<input
-					class="input !pl-9"
-					type="password"
-					name="password"
-					autocomplete="new-password"
-					required
-					minlength="8"
-					placeholder="8+ characters"
-				/>
-			</span>
+			<PasswordField name="password" autocomplete="new-password" minlength={8} placeholder="8+ characters" />
 		</label>
 
 		<label class="flex flex-col">
 			<span class="label">Confirm new password</span>
-			<span class="relative">
-				<LockKeyhole size={16} class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft" />
-				<input
-					class="input !pl-9"
-					type="password"
-					name="confirm"
-					autocomplete="new-password"
-					required
-					placeholder="Repeat password"
-				/>
-			</span>
+			<PasswordField name="confirm" autocomplete="new-password" placeholder="Repeat password" />
 		</label>
 
 		<p class="hint">Use 8 or more characters. A passphrase of a few words is easier to remember and harder to guess.</p>

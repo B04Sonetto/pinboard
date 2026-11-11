@@ -86,20 +86,29 @@
 
 <div class="flex flex-col gap-6">
 	<PageHeader
-		kicker="While it is awaiting review"
-		title="Edit your note"
-		description="You can revise a submitted note as often as you need before a moderator reviews it. Changes are saved in place."
+		kicker={note.status === 'rejected' ? 'Fix and resubmit' : 'While it is awaiting review'}
+		title={note.status === 'rejected' ? 'Revise your note' : 'Edit your note'}
+		description={note.status === 'rejected'
+			? 'Address the moderator feedback below and resubmit your note. It will be re-queued for verification.'
+			: 'You can revise a submitted note as often as you need before a moderator reviews it. Changes are saved in place.'}
 	>
 		<a href="/notes/{note.id}" class="btn btn-secondary"><ArrowLeft size={15} /> Back to note</a>
 	</PageHeader>
 
-	<div class="rounded-xl border-2 border-ink bg-marigold-soft p-4">
-		<p class="flex items-center gap-2 text-sm font-bold"><Info size={16} /> Editing: {note.title}</p>
-		<p class="mt-1 text-[0.78rem] leading-relaxed text-ink-soft">
-			Submitted {formatDate(note.created_at)}. Once verified, use “Submit a revision” instead so the verified version stays
-			available.
-		</p>
-	</div>
+	{#if note.status === 'rejected' && note.moderator_note}
+		<div class="rounded-xl border-2 border-[#B42318] bg-[#FFF1EF] p-4">
+			<p class="text-sm font-bold text-[#8f1c12]">Moderator feedback to address:</p>
+			<p class="mt-1 text-[0.82rem] leading-relaxed text-[#6f1a12]">{note.moderator_note}</p>
+		</div>
+	{:else}
+		<div class="rounded-xl border-2 border-ink bg-marigold-soft p-4">
+			<p class="flex items-center gap-2 text-sm font-bold"><Info size={16} /> Editing: {note.title}</p>
+			<p class="mt-1 text-[0.78rem] leading-relaxed text-ink-soft">
+				Submitted {formatDate(note.created_at)}. Once verified, use “Submit a revision” instead so the verified version stays
+				available.
+			</p>
+		</div>
+	{/if}
 
 	{#if form && 'error' in form && form.error}
 		<div class="flex items-start gap-2 rounded-xl border-2 border-[#B42318] bg-[#FFF1EF] px-4 py-3 text-sm font-semibold text-[#8f1c12]" role="alert">
@@ -305,17 +314,18 @@
 						<span class="h-4 w-4 animate-spin rounded-full border-2 border-ink/30 border-t-ink"></span>
 						Saving…
 					{:else}
-						<Save size={17} /> Save changes
+						<Save size={17} /> {note.status === 'rejected' ? 'Resubmit for review' : 'Save changes'}
 					{/if}
 				</button>
 				<a href="/notes/{note.id}" class="btn btn-ghost btn-sm mt-2 w-full">Cancel</a>
 			</section>
 
 			<section class="rounded-xl border-2 border-ink bg-[#F3EDDD] p-4">
-				<p class="text-[0.78rem] font-bold">Still awaiting review</p>
+				<p class="text-[0.78rem] font-bold">{note.status === 'rejected' ? 'Re-enters review queue' : 'Still awaiting review'}</p>
 				<p class="mt-1 text-[0.72rem] leading-relaxed text-ink-soft">
-					Your changes do not skip the queue. A moderator will still review this note before it becomes Community
-					Verified.
+					{note.status === 'rejected'
+						? 'Saving will reset status to submitted so a moderator can verify your updated note.'
+						: 'Your changes do not skip the queue. A moderator will still review this note before it becomes Community Verified.'}
 				</p>
 			</section>
 		</aside>

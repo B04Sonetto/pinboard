@@ -185,6 +185,11 @@
 					</span>
 					<div class="min-w-0 flex-1">
 						<p class="text-[0.92rem] font-semibold leading-relaxed">{question.prompt}</p>
+						{#if question.sourceNoteId && question.sourceTitle}
+							<a href="/notes/{question.sourceNoteId}" class="mt-1 inline-block text-[0.68rem] font-bold text-violet hover:underline">
+								Source note: {question.sourceTitle} →
+							</a>
+						{/if}
 
 						<div class="mt-3 grid gap-2 sm:grid-cols-2">
 							{#each question.options as option, optionIndex (optionIndex)}

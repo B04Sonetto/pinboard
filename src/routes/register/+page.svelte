@@ -1,12 +1,17 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { untrack } from 'svelte';
 	import type { ActionData } from './$types';
 	import AuthShell from '$lib/components/AuthShell.svelte';
-	import { AlertCircle, ArrowRight, CheckCircle2, LockKeyhole, Mail, UserRound } from '@lucide/svelte';
+	import PasswordField from '$lib/components/PasswordField.svelte';
+	import { isLspuStudentEmail } from '$lib/utils';
+	import { AlertCircle, ArrowRight, CheckCircle2, Mail, UserRound } from '@lucide/svelte';
 
 	let { data, form }: { data: Record<string, never>; form: ActionData } = $props();
 	let submitting = $state(false);
+	let email = $state(untrack(() => (form && 'email' in form ? form.email : '')));
 	const success = $derived(form && 'success' in form && form.success === true);
+	const emailReady = $derived(isLspuStudentEmail(email));
 </script>
 
 <svelte:head><title>Create account · Pinboard</title></svelte:head>
@@ -87,52 +92,40 @@
 						type="email"
 						name="email"
 						autocomplete="email"
+						autocapitalize="none"
+						spellcheck="false"
 						required
-						pattern="^\d{4}-\d{4}@lspu\.edu\.ph$"
-						title="Use the format 0000-0000@lspu.edu.ph"
-						placeholder="0000-0000@lspu.edu.ph"
-						value={form && 'email' in form ? form.email : ''}
+						placeholder="0324-0574@lspu.edu.ph"
+						bind:value={email}
 					/>
+				</span>
+				<span class="mt-1.5 text-[0.7rem] leading-snug {email && !emailReady ? 'font-semibold text-[#8f1c12]' : 'text-ink-soft'}">
+					{#if emailReady}
+						<span class="font-semibold text-[#155c3c]">This is an LSPU student email.</span>
+					{:else if email.trim()}
+						Use your student number, like 0324-0574@lspu.edu.ph. A missing hyphen is filled in for you.
+					{:else}
+						Only Laguna State Polytechnic University student emails can join. Example: 0324-0574@lspu.edu.ph.
+					{/if}
 				</span>
 			</label>
 
 			<div class="grid gap-3.5 sm:grid-cols-2">
 				<label class="flex flex-col">
 					<span class="label">Password</span>
-					<span class="relative">
-						<LockKeyhole size={16} class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft" />
-						<input
-							class="input !pl-9"
-							type="password"
-							name="password"
-							autocomplete="new-password"
-							required
-							minlength="8"
-							placeholder="8+ characters"
-						/>
-					</span>
+					<PasswordField name="password" autocomplete="new-password" minlength={8} placeholder="8+ characters" />
 				</label>
 				<label class="flex flex-col">
 					<span class="label">Confirm password</span>
-					<span class="relative">
-						<LockKeyhole size={16} class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft" />
-						<input
-							class="input !pl-9"
-							type="password"
-							name="confirm"
-							autocomplete="new-password"
-							required
-							placeholder="Repeat password"
-						/>
-					</span>
+					<PasswordField name="confirm" autocomplete="new-password" placeholder="Repeat password" />
 				</label>
 			</div>
 
 			<label class="flex cursor-pointer items-start gap-2.5 rounded-lg border-2 border-ink/20 bg-paper p-2.5">
 				<input type="checkbox" name="terms" class="mt-0.5 h-4 w-4 accent-[#211D31]" />
 				<span class="text-[0.74rem] leading-relaxed text-ink-soft">
-					I will contribute honestly, credit sources, and respect the community guidelines. I understand
-					community notes are not official university material.
+				I will contribute honestly, credit sources, and respect the community guidelines. Notes on Pinboard
+				are shared by LSPU students.
 				</span>
 			</label>
 

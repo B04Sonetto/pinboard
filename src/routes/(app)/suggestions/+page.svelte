@@ -217,7 +217,7 @@
 
 				<div class="rounded-lg border-2 border-dashed border-ink/25 bg-paper-deep/60 px-3 py-2">
 					<p class="text-[0.66rem] leading-relaxed text-ink-soft">
-						Suggestions are community input, not official university records. Moderators verify against public course
+						Suggestions help keep the LSPU course map current. Moderators check them against published course
 						listings before adding anything.
 					</p>
 				</div>

@@ -165,6 +165,24 @@ export function safeNext(value: string | null | undefined): string {
 	return value;
 }
 
+/** Student numbers look like 0324-0574@lspu.edu.ph. Braces cannot live in a Svelte attribute pattern — `{4}` is compiled away. */
+const LSPU_STUDENT_EMAIL = /^\d{4}-\d{4}@lspu\.edu\.ph$/;
+
+export function normalizeLspuEmail(raw: string): string {
+	let email = raw
+		.trim()
+		.toLowerCase()
+		.replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-')
+		.replace(/\s+/g, '');
+	const compact = email.match(/^(\d{8})@lspu\.edu\.ph$/);
+	if (compact) email = `${compact[1].slice(0, 4)}-${compact[1].slice(4)}@lspu.edu.ph`;
+	return email;
+}
+
+export function isLspuStudentEmail(raw: string): boolean {
+	return LSPU_STUDENT_EMAIL.test(normalizeLspuEmail(raw));
+}
+
 export function clamp(value: number, min: number, max: number) {
 	return Math.min(max, Math.max(min, value));
 }

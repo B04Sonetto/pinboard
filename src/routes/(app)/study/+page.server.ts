@@ -4,6 +4,7 @@ import type { Note, StudyDifficulty, StudyKind } from '$lib/types';
 import { NOTE_CARD_SELECT, NOTE_FULL_SELECT, loadTaxonomy } from '$lib/server/queries';
 import { generateStudy, type StudySource } from '$lib/server/study-engine';
 import { stripMarkdown } from '$lib/utils';
+import { checkRateLimit } from '$lib/server/rate-limit';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const KINDS: StudyKind[] = ['reviewer', 'summary', 'quiz', 'keywords'];
@@ -63,6 +64,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 export const actions: Actions = {
 	generate: async ({ request, locals }) => {
+		if (!checkRateLimit(`study:${locals.user!.id}`, 10, 60_000)) {
+			return fail(429, { error: 'Too many generation requests. Please wait a minute before generating again.' });
+		}
 		const form = await request.formData();
 		const kind = String(form.get('kind') ?? 'reviewer') as StudyKind;
 		const noteIds = form

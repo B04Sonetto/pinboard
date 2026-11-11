@@ -658,3 +658,64 @@
 		scroll-behavior: auto !important;
 	}
 }
+
+/* Print Stylesheet for Study Materials, Reviewers & Notes */
+@media print {
+	html,
+	body {
+		background: #ffffff !important;
+		color: #000000 !important;
+		font-size: 11pt !important;
+		line-height: 1.5 !important;
+	}
+
+	header nav,
+	aside,
+	button,
+	.btn,
+	.no-print,
+	[role="navigation"],
+	[aria-label="Breadcrumb"],
+	details summary,
+	.tab,
+	form {
+		display: none !important;
+	}
+
+	.note-sheet,
+	.card {
+		background: transparent !important;
+		border: 1px solid #ccc !important;
+		box-shadow: none !important;
+		padding: 0 !important;
+		margin: 0 !important;
+	}
+
+	.note-sheet::before,
+	.note-sheet::after,
+	span[aria-hidden="true"],
+	.pin-dot,
+	.tape {
+		display: none !important;
+	}
+
+	h1, h2, h3 {
+		color: #000000 !important;
+		break-after: avoid !important;
+		page-break-after: avoid !important;
+	}
+
+	p, li, blockquote {
+		orphans: 3;
+		widows: 3;
+	}
+
+	article {
+		width: 100% !important;
+		max-width: 100% !important;
+	}
+
+	a[href]::after {
+		content: "" !important;
+	}
+}

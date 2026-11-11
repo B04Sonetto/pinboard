@@ -113,7 +113,20 @@
 	<header class="flex flex-col gap-4">
 		<div class="flex flex-wrap items-center gap-2">
 			<Badge status={note.status} origin={note.origin} />
-			<span class="badge badge-neutral">{note.visibility === 'department' ? 'Department only' : 'Community-wide'}</span>
+			{#if note.visibility === 'department'}
+				<span class="badge border-ink !bg-amber-100 !text-amber-950" title="Visible only to {note.department?.name ?? 'department'} students">
+					🔒 {note.department?.short_name ?? 'Department'} only
+				</span>
+			{:else}
+				<span class="badge border-ink !bg-emerald-100 !text-emerald-950" title="Visible university-wide across all departments">
+					🌐 Community-wide
+				</span>
+			{/if}
+			{#if note.department}
+				<a href="/notes?department={note.department.id}" class="chip chip-soft !min-h-6 !text-[0.66rem] hover:border-ink">
+					{note.department.short_name}
+				</a>
+			{/if}
 			{#if note.subject}<span class="chip chip-soft !min-h-6 !text-[0.66rem]">{note.subject.code}</span>{/if}
 			{#if note.topic}<span class="chip !min-h-6 !text-[0.66rem]">{note.topic.name}</span>{/if}
 		</div>
@@ -129,11 +142,25 @@
 			<span>{readingTime(note.content)}</span>
 			<span class="flex items-center gap-1"><Eye size={13} /> {note.views} views</span>
 			<span class="flex items-center gap-1"><Download size={13} /> {note.downloads} downloads</span>
+			{#if note.status === 'verified' && note.verified_at}
+				<span class="flex items-center gap-1 font-semibold text-[#155c3c]" title="Reviewed and approved by a moderator">
+					<ShieldCheck size={14} class="text-[#1C7A50]" />
+					Verified{#if note.verifier} by {note.verifier.full_name}{#if note.verifier.role !== 'student'} ({note.verifier.role}){/if}{/if} · {formatDate(note.verified_at)}
+				</span>
+			{/if}
 		</div>
 	</header>
 
 	<div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_330px]">
 		<article class="min-w-0">
+			<!-- Academic Provenance Disclaimer -->
+			<div class="mb-4 flex items-start gap-2.5 rounded-xl border-2 border-ink/20 bg-[#F3EDDD] px-4 py-3 text-[0.74rem] text-ink-soft">
+				<AlertTriangle size={16} class="mt-0.5 shrink-0 text-amber-700" />
+				<p>
+					<strong class="font-bold text-ink">Shared by an LSPU student.</strong> This is peer study material for Laguna State Polytechnic University, not a registrar handout. Check formulas, dates, and definitions against your syllabus.
+				</p>
+			</div>
+
 			<div class="note-sheet px-5 py-6 sm:px-8 sm:py-8">
 				<span class="absolute right-5 top-0 h-3 w-16 -translate-y-1/2 rotate-[-4deg] bg-[#FFF1B5]/90" aria-hidden="true"></span>
 
@@ -260,7 +287,10 @@
 			</div>
 
 			<div class="card p-4">
-				<p class="flex items-center gap-1.5 kicker !text-[0.6rem]"><Quote size={12} /> Cite this note</p>
+				<div class="flex items-center justify-between">
+					<p class="flex items-center gap-1.5 kicker !text-[0.6rem]"><Quote size={12} /> Cite this note</p>
+					<span class="font-mono text-[0.6rem] text-ink-faint">Updated {formatDate(note.updated_at)}</span>
+				</div>
 				<div class="mt-2 flex gap-1 rounded-lg border-2 border-ink bg-paper p-0.5">
 					{#each [{ id: 'apa', label: 'APA' }, { id: 'mla', label: 'MLA' }, { id: 'chicago', label: 'Chicago' }] as style (style.id)}
 						<button
@@ -307,10 +337,10 @@
 			{/if}
 
 			<div class="rounded-xl border-2 border-ink bg-[#F3EDDD] p-4">
-				<p class="flex items-center gap-1.5 text-[0.78rem] font-bold"><AlertTriangle size={15} /> Community material</p>
+				<p class="flex items-center gap-1.5 text-[0.78rem] font-bold"><AlertTriangle size={15} /> LSPU student note</p>
 				<p class="mt-1 text-[0.7rem] leading-relaxed text-ink-soft">
-					This note is not official university material. Verify formulas, dates and definitions against your
-					instructor's discussion before relying on them.
+					Written by an LSPU student for Laguna State Polytechnic University classmates. Check formulas, dates, and
+					definitions against your instructor's discussion before you rely on them.
 				</p>
 			</div>
 
@@ -323,7 +353,7 @@
 					{#if note.status === 'submitted'}
 						<a href="/notes/{note.id}/edit" class="btn btn-primary btn-sm mt-2 w-full"><PenLine size={14} /> Edit note</a>
 					{:else if note.status === 'rejected'}
-						<a href="/notes/new?from={note.id}" class="btn btn-primary btn-sm mt-2 w-full"><PenLine size={14} /> Fix and resubmit</a>
+						<a href="/notes/{note.id}/edit" class="btn btn-primary btn-sm mt-2 w-full"><PenLine size={14} /> Fix and resubmit</a>
 					{:else}
 						<a href="/notes/new?from={note.id}" class="btn btn-secondary btn-sm mt-2 w-full"><PenLine size={14} /> Submit a revision</a>
 					{/if}

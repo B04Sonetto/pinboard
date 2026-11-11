@@ -35,8 +35,8 @@
 				Every lesson you survive becomes a note someone else needs.
 			</h1>
 			<p class="mt-5 max-w-lg text-[0.98rem] leading-relaxed text-ink-soft">
-				Pinboard is where students preserve what they learn, find material from past batches, and turn a pile of
-				notes into something they can actually study.
+				Pinboard is the study board for Laguna State Polytechnic University. LSPU students keep notes from class,
+				find material from earlier batches, and turn them into something they can actually study.
 			</p>
 		</div>
 
@@ -67,8 +67,8 @@
 		</div>
 
 		<p class="relative z-10 mt-8 max-w-md text-[0.65rem] leading-relaxed text-ink-soft">
-			Independent community platform. Not affiliated with or endorsed by any university. Community-submitted
-			curriculum is clearly labeled.
+			Built for Laguna State Polytechnic University students. Use your LSPU student email,
+			for example 0324-0574@lspu.edu.ph. Pinboard is a student community platform, not an official university service.
 		</p>
 	</aside>
 
@@ -101,13 +101,16 @@
 					{@render notice()}
 				{/if}
 
+				<p class="mb-3 text-center font-mono text-[0.62rem] font-bold uppercase tracking-[0.16em] text-ink-soft">
+					Laguna State Polytechnic University
+				</p>
+
 				<div class="card p-5 shadow-[5px_5px_0_#211D31] sm:p-6">
 					{@render children()}
 				</div>
 
 				<p class="mt-4 text-center text-[0.68rem] leading-relaxed text-ink-soft">
-					By continuing you agree to keep the community academic, respectful and honest. Pinboard does not
-					provide official university records.
+					For LSPU students. Keep what you share academic, respectful, and honest. Community notes are not official university material.
 				</p>
 			</div>
 		</div>

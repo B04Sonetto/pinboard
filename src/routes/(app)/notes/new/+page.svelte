@@ -157,11 +157,36 @@
 		<div class="flex min-w-0 flex-col gap-5">
 			<section class="card p-4 sm:p-5">
 				<h2 class="font-display text-lg font-extrabold">1. Where does this belong?</h2>
-				<p class="mt-1 text-[0.78rem] text-ink-soft">Courses are community-built. Pick the closest match.</p>
+				<p class="mt-1 text-[0.78rem] text-ink-soft">
+					Notes are filed under your enrolled department so course materials stay authentic and organized.
+				</p>
 
-				<div class="mt-4 grid gap-4 sm:grid-cols-2">
-					<label class="flex flex-col">
-						<span class="label">Department *</span>
+				{#if data.enrolledDepartment}
+					<div
+						class="mt-3 flex items-center justify-between rounded-xl border-2 border-ink p-3"
+						style="background-color: var(--color-paper-card); border-left-width: 6px; border-left-color: {data.enrolledDepartment.color || '#FFD34D'}"
+					>
+						<div class="min-w-0">
+							<p class="font-mono text-[0.6rem] font-bold uppercase tracking-wider text-ink-soft">
+								Your Enrolled Department (Locked)
+							</p>
+							<p class="font-display text-base font-extrabold leading-tight">
+								{data.enrolledDepartment.name} ({data.enrolledDepartment.short_name})
+							</p>
+							<p class="text-[0.68rem] text-ink-soft">
+								Cross-posting to another department is disabled to keep courses clear.
+							</p>
+						</div>
+						<input type="hidden" name="department_id" value={data.enrolledDepartment.id} />
+						<span class="chip chip-soft !text-[0.62rem] shrink-0 font-bold">🔒 Locked</span>
+					</div>
+				{:else}
+					<div class="mt-3 rounded-xl border-2 border-amber-600 bg-amber-50 p-3 text-xs text-amber-900">
+						<p class="font-bold">You haven't set your enrolled department yet.</p>
+						<p class="mt-0.5">Please choose your department below. This will become your enrolled department.</p>
+					</div>
+					<label class="mt-3 flex flex-col">
+						<span class="label">Select your enrolled department *</span>
 						<select class="select" name="department_id" required bind:value={department} onchange={onDepartmentChange}>
 							<option value="">Choose a department</option>
 							{#each data.taxonomy.departments as item (item.id)}
@@ -169,7 +194,9 @@
 							{/each}
 						</select>
 					</label>
+				{/if}
 
+				<div class="mt-4 grid gap-4 sm:grid-cols-2">
 					<label class="flex flex-col">
 						<span class="label">Program (optional)</span>
 						<select class="select" name="program_id" bind:value={program} onchange={onProgramChange} disabled={!department}>
@@ -189,7 +216,7 @@
 							{/each}
 						</select>
 						{#if department && subjects.length === 0}
-							<span class="hint mt-1">No subjects listed yet for this selection. Suggest one from the Suggestions page.</span>
+							<span class="hint mt-1">No subjects listed yet for this department. Suggest one from Suggestions.</span>
 						{/if}
 					</label>
 
@@ -358,15 +385,33 @@
 			<section class="card p-4">
 				<h2 class="flex items-center gap-2 font-display text-lg font-extrabold"><ShieldCheck size={17} /> 4. Visibility & submit</h2>
 
-				<fieldset class="mt-3 flex flex-col gap-2">
-					<legend class="label">Who should see this?</legend>
-					<label class="flex cursor-pointer items-start gap-2 rounded-lg border-2 border-ink/30 bg-paper p-2.5 has-[:checked]:border-ink has-[:checked]:bg-marigold-soft">
+				<fieldset class="mt-3 flex flex-col gap-2.5">
+					<legend class="label">Visibility *</legend>
+					<label class="flex cursor-pointer items-start gap-2.5 rounded-lg border-2 border-ink/30 bg-paper p-3 transition has-[:checked]:border-ink has-[:checked]:bg-marigold-soft">
 						<input type="radio" name="visibility" value="community" checked={val('visibility', 'community') === 'community'} class="mt-0.5 h-4 w-4 accent-[#211D31]" />
-						<span><span class="block text-[0.78rem] font-bold">Community-wide</span><span class="block text-[0.68rem] leading-snug text-ink-soft">Visible to all signed-in students once verified.</span></span>
+						<span>
+							<span class="flex items-center gap-1.5 text-[0.8rem] font-bold">
+								<span>🌐 Community-wide</span>
+								<span class="chip chip-soft !min-h-5 !text-[0.58rem]">All departments</span>
+							</span>
+							<span class="mt-0.5 block text-[0.68rem] leading-snug text-ink-soft">
+								Visible to all university students across all departments in Community Notes.
+							</span>
+						</span>
 					</label>
-					<label class="flex cursor-pointer items-start gap-2 rounded-lg border-2 border-ink/30 bg-paper p-2.5 has-[:checked]:border-ink has-[:checked]:bg-marigold-soft">
+					<label class="flex cursor-pointer items-start gap-2.5 rounded-lg border-2 border-ink/30 bg-paper p-3 transition has-[:checked]:border-ink has-[:checked]:bg-marigold-soft">
 						<input type="radio" name="visibility" value="department" checked={val('visibility', 'community') === 'department'} class="mt-0.5 h-4 w-4 accent-[#211D31]" />
-						<span><span class="block text-[0.78rem] font-bold">My department only</span><span class="block text-[0.68rem] leading-snug text-ink-soft">Limited to students in the same department.</span></span>
+						<span>
+							<span class="flex items-center gap-1.5 text-[0.8rem] font-bold">
+								<span>🔒 Department only</span>
+								<span class="chip chip-soft !min-h-5 !text-[0.58rem]">
+									{data.enrolledDepartment?.short_name ?? 'Your department'}
+								</span>
+							</span>
+							<span class="mt-0.5 block text-[0.68rem] leading-snug text-ink-soft">
+								Confined strictly to students enrolled in {data.enrolledDepartment?.name ?? 'your department'}.
+							</span>
+						</span>
 					</label>
 				</fieldset>
 

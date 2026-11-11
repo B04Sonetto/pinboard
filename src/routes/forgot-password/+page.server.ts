@@ -1,19 +1,18 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
+import { isLspuStudentEmail, normalizeLspuEmail } from '$lib/utils';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	return { signedIn: Boolean(locals.user), origin: url.origin };
 };
 
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 export const actions: Actions = {
 	default: async ({ request, locals, url }) => {
 		const form = await request.formData();
-		const email = String(form.get('email') ?? '').trim().toLowerCase();
+		const email = normalizeLspuEmail(String(form.get('email') ?? ''));
 
-		if (!emailPattern.test(email)) {
-			return fail(400, { error: 'Enter the email address linked to your account.', email });
+		if (!isLspuStudentEmail(email)) {
+			return fail(400, { error: 'Use the LSPU student email on your account, for example 0324-0574@lspu.edu.ph.', email });
 		}
 
 		const { error } = await locals.supabase.auth.resetPasswordForEmail(email, {

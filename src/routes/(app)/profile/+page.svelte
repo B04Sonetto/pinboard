@@ -4,12 +4,16 @@
 	import { enhance } from '$app/forms';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
+	import PasswordField from '$lib/components/PasswordField.svelte';
 	import {
+		AlertTriangle,
 		BookMarked,
 		CheckCircle2,
+		Download,
 		ExternalLink,
 		FileQuestion,
 		GraduationCap,
+		KeyRound,
 		Library,
 		Lightbulb,
 		LoaderCircle,
@@ -19,6 +23,7 @@
 		ShieldCheck,
 		Sparkles,
 		StickyNote,
+		Trash2,
 		UserPen
 	} from '@lucide/svelte';
 	import { formatDate, suggestionStatusLabel } from '$lib/utils';
@@ -36,6 +41,23 @@
 	let semester = $state(untrack(() => (profile.semester ? String(profile.semester) : '')));
 	let avatarColor = $state(untrack(() => profile.avatar_color || data.avatarColors[0]));
 	let saving = $state(false);
+	let changingPassword = $state(false);
+	let exportingData = $state(false);
+	let deletingAccount = $state(false);
+
+	$effect(() => {
+		if (form && 'exportJson' in form && typeof form.exportJson === 'string') {
+			const blob = new Blob([form.exportJson], { type: 'application/json' });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `pinboard-export-${new Date().toISOString().slice(0, 10)}.json`;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			URL.revokeObjectURL(url);
+		}
+	});
 
 	const programs = $derived(
 		data.programs.filter((program) => !departmentId || program.department_id === departmentId)
@@ -274,7 +296,7 @@
 						<select class="select" name="department_id" bind:value={departmentId} onchange={onDepartmentChange}>
 							<option value="">Not set</option>
 							{#each data.departments as department (department.id)}
-								<option value={department.id}>{department.short_name}</option>
+								<option value={department.id}>{department.short_name} · {department.name}</option>
 							{/each}
 						</select>
 					</label>
@@ -283,7 +305,7 @@
 						<select class="select" name="program_id" bind:value={programId}>
 							<option value="">Not set</option>
 							{#each programs as program (program.id)}
-								<option value={program.id}>{program.code}</option>
+								<option value={program.id}>{program.code} · {program.name}</option>
 							{/each}
 						</select>
 					</label>
@@ -368,6 +390,116 @@
 					<a href="/study/history" class="btn btn-ghost btn-sm"><Sparkles size={13} /> Study history</a>
 					<a href="/collection?tab=quizzes" class="btn btn-ghost btn-sm"><FileQuestion size={13} /> Quiz history</a>
 				</div>
+			</div>
+
+			<!-- Account Security & Data Management -->
+			<div class="card p-4 flex flex-col gap-3">
+				<div class="flex items-center gap-2">
+					<KeyRound size={16} />
+					<h2 class="font-display text-base font-extrabold">Security & Data</h2>
+				</div>
+
+				<!-- Change password -->
+				<details class="rounded-lg border border-ink/20 bg-paper p-3">
+					<summary class="cursor-pointer text-[0.78rem] font-bold list-none flex items-center justify-between">
+						<span>Change password</span>
+						<span class="text-xs text-ink-faint">▼</span>
+					</summary>
+					{#if form && 'passwordSuccess' in form && form.passwordSuccess}
+						<p class="mt-2 text-xs font-semibold text-[#155c3c]">{form.passwordMessage}</p>
+					{/if}
+					{#if form && 'passwordError' in form && form.passwordError}
+						<p class="mt-2 text-xs font-semibold text-[#B42318]">{form.passwordError}</p>
+					{/if}
+					<form
+						method="POST"
+						action="?/changePassword"
+						class="mt-3 flex flex-col gap-2"
+						use:enhance={() => {
+							changingPassword = true;
+							return async ({ update }) => {
+								await update();
+								changingPassword = false;
+							};
+						}}
+					>
+						<label class="flex flex-col">
+							<span class="label !text-[0.68rem]">New password</span>
+							<PasswordField name="new_password" autocomplete="new-password" minlength={8} placeholder="At least 8 characters" inputClass="!min-h-9 !text-xs" />
+						</label>
+						<label class="flex flex-col">
+							<span class="label !text-[0.68rem]">Confirm password</span>
+							<PasswordField name="confirm_password" autocomplete="new-password" minlength={8} placeholder="Repeat new password" inputClass="!min-h-9 !text-xs" />
+						</label>
+						<button type="submit" class="btn btn-primary btn-sm mt-1" disabled={changingPassword}>
+							{#if changingPassword}<LoaderCircle size={14} class="animate-spin" /> Updating…{:else}Update password{/if}
+						</button>
+					</form>
+				</details>
+
+				<!-- Export data -->
+				<details class="rounded-lg border border-ink/20 bg-paper p-3">
+					<summary class="cursor-pointer text-[0.78rem] font-bold list-none flex items-center justify-between">
+						<span>Export my data</span>
+						<span class="text-xs text-ink-faint">▼</span>
+					</summary>
+					<p class="mt-2 text-[0.72rem] leading-relaxed text-ink-soft">
+						Download a complete JSON export of your profile, notes, bookmarks, quiz attempts, and suggestions.
+					</p>
+					{#if form && 'exportSuccess' in form && form.exportSuccess}
+						<p class="mt-2 text-xs font-semibold text-[#155c3c]">Export generated! Check your downloads.</p>
+					{/if}
+					<form
+						method="POST"
+						action="?/exportData"
+						class="mt-2"
+						use:enhance={() => {
+							exportingData = true;
+							return async ({ update }) => {
+								await update();
+								exportingData = false;
+							};
+						}}
+					>
+						<button type="submit" class="btn btn-secondary btn-sm w-full" disabled={exportingData}>
+							{#if exportingData}<LoaderCircle size={14} class="animate-spin" /> Preparing export…{:else}<Download size={14} /> Download data (.json){/if}
+						</button>
+					</form>
+				</details>
+
+				<!-- Danger zone: Delete account -->
+				<details class="rounded-lg border-2 border-[#B42318]/40 bg-[#FFF1EF]/50 p-3">
+					<summary class="cursor-pointer text-[0.78rem] font-bold text-[#8f1c12] list-none flex items-center justify-between">
+						<span class="flex items-center gap-1.5"><AlertTriangle size={14} /> Delete account</span>
+						<span class="text-xs text-ink-faint">▼</span>
+					</summary>
+					<p class="mt-2 text-[0.7rem] leading-relaxed text-[#6f1a12]">
+						Permanently delete your profile, auth credentials, and personal data. This action cannot be undone.
+					</p>
+					{#if form && 'deleteError' in form && form.deleteError}
+						<p class="mt-2 text-xs font-semibold text-[#B42318]">{form.deleteError}</p>
+					{/if}
+					<form
+						method="POST"
+						action="?/deleteAccount"
+						class="mt-2 flex flex-col gap-2"
+						use:enhance={() => {
+							deletingAccount = true;
+							return async ({ update }) => {
+								await update();
+								deletingAccount = false;
+							};
+						}}
+					>
+						<label class="flex flex-col">
+							<span class="label !text-[0.66rem] text-[#8f1c12]">Type DELETE to confirm:</span>
+							<input class="input !min-h-9 !text-xs !border-[#B42318]" type="text" name="confirmation" required placeholder="DELETE" />
+						</label>
+						<button type="submit" class="btn btn-danger btn-sm w-full" disabled={deletingAccount}>
+							{#if deletingAccount}<LoaderCircle size={14} class="animate-spin" /> Deleting…{:else}<Trash2 size={14} /> Delete account permanently{/if}
+						</button>
+					</form>
+				</details>
 			</div>
 
 			<div class="rounded-xl border-2 border-ink bg-[#F3EDDD] p-4">

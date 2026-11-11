@@ -261,8 +261,8 @@
 	<div class="flex items-start gap-2 rounded-xl border-2 border-dashed border-ink/30 px-4 py-3">
 		<AlertTriangle size={16} class="mt-0.5 shrink-0 text-ink-soft" />
 		<p class="text-[0.7rem] leading-relaxed text-ink-soft">
-			Pinboard study material is not official university content. For graded work, follow the references and instructions
-			given in your course.
+			Study material is generated from notes shared by LSPU students. For graded work, follow the references and
+			instructions given in your course.
 		</p>
 	</div>
 </div>

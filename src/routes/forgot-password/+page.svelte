@@ -55,7 +55,7 @@
 			}}
 		>
 			<label class="flex flex-col">
-				<span class="label">Email address</span>
+				<span class="label">LSPU student email</span>
 				<span class="relative">
 					<Mail size={16} class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft" />
 					<input
@@ -65,7 +65,9 @@
 						autocomplete="email"
 						required
 						value={form && 'email' in form ? form.email : ''}
-						placeholder="you@university.edu"
+						placeholder="0324-0574@lspu.edu.ph"
+						autocapitalize="none"
+						spellcheck="false"
 					/>
 				</span>
 			</label>

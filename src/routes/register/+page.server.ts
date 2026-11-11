@@ -1,19 +1,17 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { safeNext } from '$lib/utils';
+import { isLspuStudentEmail, normalizeLspuEmail, safeNext } from '$lib/utils';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	if (locals.user) redirect(303, safeNext(url.searchParams.get('redirect')));
 	return {};
 };
 
-const lspuEmailPattern = /^\d{4}-\d{4}@lspu\.edu\.ph$/;
-
 export const actions: Actions = {
 	default: async ({ request, locals, url }) => {
 		const form = await request.formData();
 		const fullName = String(form.get('full_name') ?? '').trim();
-		const email = String(form.get('email') ?? '').trim().toLowerCase();
+		const email = normalizeLspuEmail(String(form.get('email') ?? ''));
 		const password = String(form.get('password') ?? '');
 		const confirm = String(form.get('confirm') ?? '');
 		const terms = form.get('terms') === 'on';
@@ -24,9 +22,9 @@ export const actions: Actions = {
 		if (fullName.length < 2) {
 			return fail(400, { error: 'Enter your full name so contributors can be credited.', ...values });
 		}
-		if (!lspuEmailPattern.test(email)) {
+		if (!isLspuStudentEmail(email)) {
 			return fail(400, {
-				error: 'Use your LSPU student email in the format 0000-0000@lspu.edu.ph.',
+				error: 'Use your LSPU student email, for example 0324-0574@lspu.edu.ph.',
 				...values
 			});
 		}
@@ -50,10 +48,22 @@ export const actions: Actions = {
 		});
 
 		if (error) {
-			const message = error.message.toLowerCase().includes('already registered')
-				? 'An account with this email already exists. Try signing in instead.'
-				: error.message;
+			const raw = error.message.toLowerCase();
+			const message = raw.includes('already registered') || raw.includes('already been registered')
+				? 'An account with this LSPU email already exists. Sign in instead.'
+				: raw.includes('invalid') && raw.includes('email')
+					? 'That address was rejected. Use your student email, like 0324-0574@lspu.edu.ph.'
+					: raw.includes('rate limit') || raw.includes('too many')
+						? 'Too many attempts. Wait a minute, then try again.'
+						: error.message;
 			return fail(400, { error: message, ...values });
+		}
+
+		if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+			return fail(400, {
+				error: 'An account with this LSPU email already exists. Sign in instead.',
+				...values
+			});
 		}
 
 		if (data.session) {

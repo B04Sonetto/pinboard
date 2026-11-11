@@ -9,13 +9,28 @@
 	let {
 		note,
 		saved = false,
-		bookmark = true
-	}: { note: Note; saved?: boolean; bookmark?: boolean } = $props();
+		bookmark = true,
+		query = ''
+	}: { note: Note; saved?: boolean; bookmark?: boolean; query?: string } = $props();
 
 	const meta = $derived(
 		[note.subject?.name, yearLabel(note.year_level), semesterLabel(note.semester)].filter(Boolean).join(' · ')
 	);
 	const accent = $derived(note.department?.color || '#FFD34D');
+	const searchTerms = $derived(query.trim().split(/\s+/).filter((term) => term.length > 1));
+
+	function highlightParts(text: string | null | undefined): { text: string; matched: boolean }[] {
+		if (!text || searchTerms.length === 0) return [{ text: text ?? '', matched: false }];
+		const escaped = searchTerms.map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+		const pattern = new RegExp(`(${escaped.join('|')})`, 'ig');
+		return text.split(pattern).filter(Boolean).map((part) => ({
+			text: part,
+			matched: searchTerms.some((term) => part.toLowerCase() === term.toLowerCase())
+		}));
+	}
+
+	const titleParts = $derived(highlightParts(note.title));
+	const summaryParts = $derived(highlightParts(note.summary || 'Open this note to read the full material.'));
 </script>
 
 <article
@@ -26,13 +41,24 @@
 
 	<div class="pointer-events-none relative z-10 flex flex-1 flex-col gap-3 p-4 sm:p-5">
 		<div class="flex flex-wrap items-start justify-between gap-2">
-			<span class="kicker !text-[0.6rem]">{note.department?.short_name ?? 'Community'} · {note.subject?.code ?? 'Subject'}</span>
+			<div class="flex flex-wrap items-center gap-1.5">
+				<span class="kicker !text-[0.6rem]">{note.department?.short_name ?? 'Community'} · {note.subject?.code ?? 'Subject'}</span>
+				{#if note.visibility === 'department'}
+					<span class="chip !min-h-5 !px-1.5 !text-[0.58rem] font-bold bg-amber-100/90 text-amber-950 border border-ink/40" title="Department only ({note.department?.short_name})">
+						🔒 {note.department?.short_name ?? 'Dept'}
+					</span>
+				{:else}
+					<span class="chip !min-h-5 !px-1.5 !text-[0.58rem] font-bold bg-emerald-100/80 text-emerald-950 border border-ink/40" title="Visible university-wide">
+						🌐 All
+					</span>
+				{/if}
+			</div>
 			<Badge status={note.status} origin={note.origin} />
 		</div>
 
 		<div class="flex flex-col gap-1.5">
 			<h3 class="font-display text-[1.18rem] font-extrabold leading-[1.15] tracking-[-0.02em] transition group-hover:underline">
-				{note.title}
+				{#each titleParts as part, index (index)}{#if part.matched}<mark>{part.text}</mark>{:else}{part.text}{/if}{/each}
 			</h3>
 			<div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.68rem] font-semibold text-ink-soft">
 				<span>{meta}</span>
@@ -41,7 +67,7 @@
 		</div>
 
 		<p class="line-clamp-3 text-[0.82rem] leading-relaxed text-ink-soft">
-			{note.summary || 'Open this note to read the full material.'}
+			{#each summaryParts as part, index (index)}{#if part.matched}<mark>{part.text}</mark>{:else}{part.text}{/if}{/each}
 		</p>
 
 		{#if note.keywords?.length}

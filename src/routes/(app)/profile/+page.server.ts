@@ -1,7 +1,8 @@
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import type { Note, Profile, Suggestion } from '$lib/types';
 import { NOTE_CARD_SELECT } from '$lib/server/queries';
+import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 const AVATAR_COLORS = ['#FFD34D', '#A9E5BF', '#BCDCFF', '#FFC3D2', '#DCD0FF', '#FF9C88', '#C9A276'];
 const DEFAULT_COLOR = AVATAR_COLORS[0];
@@ -103,5 +104,109 @@ export const actions: Actions = {
 		if (error) return fail(400, { error: 'Could not save your profile. Try again in a moment.' });
 
 		return { success: true, message: 'Profile updated.' };
+	},
+
+	changePassword: async ({ request, locals }) => {
+		const form = await request.formData();
+		const password = String(form.get('new_password') ?? '');
+		const confirm = String(form.get('confirm_password') ?? '');
+
+		if (password.length < 8) {
+			return fail(400, { passwordError: 'Password must be at least 8 characters long.' });
+		}
+		if (password !== confirm) {
+			return fail(400, { passwordError: 'Passwords do not match.' });
+		}
+
+		const { error } = await locals.supabase.auth.updateUser({ password });
+		if (error) {
+			return fail(400, { passwordError: error.message || 'Could not update password.' });
+		}
+
+		return { passwordSuccess: true, passwordMessage: 'Password updated successfully.' };
+	},
+
+	exportData: async ({ locals }) => {
+		const userId = locals.user!.id;
+		const [notes, bookmarks, topicBookmarks, attempts, generations, suggestions, profile] = await Promise.all([
+			locals.supabase
+				.from('notes')
+				.select('id, title, summary, content, visibility, status, created_at, updated_at, keywords, source_url')
+				.eq('author_id', userId),
+			locals.supabase.from('bookmarks').select('note_id, created_at').eq('user_id', userId),
+			locals.supabase.from('topic_bookmarks').select('topic_id, created_at').eq('user_id', userId),
+			locals.supabase
+				.from('quiz_attempts')
+				.select('generation_id, score, total, answers, created_at')
+				.eq('user_id', userId),
+			locals.supabase
+				.from('ai_generations')
+				.select('id, kind, title, content, payload, source_note_ids, created_at')
+				.eq('user_id', userId),
+			locals.supabase
+				.from('suggestions')
+				.select('kind, title, details, status, admin_note, created_at')
+				.eq('user_id', userId),
+			locals.supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
+		]);
+
+		const exportPayload = {
+			exported_at: new Date().toISOString(),
+			user_id: userId,
+			email: locals.user!.email,
+			profile: profile.data,
+			notes: notes.data ?? [],
+			bookmarks: bookmarks.data ?? [],
+			topic_bookmarks: topicBookmarks.data ?? [],
+			study_generations: generations.data ?? [],
+			quiz_attempts: attempts.data ?? [],
+			suggestions: suggestions.data ?? []
+		};
+
+		return {
+			exportSuccess: true,
+			exportJson: JSON.stringify(exportPayload, null, 2)
+		};
+	},
+
+	deleteAccount: async ({ request, locals }) => {
+		const form = await request.formData();
+		const confirmation = String(form.get('confirmation') ?? '').trim();
+
+		if (confirmation !== 'DELETE') {
+			return fail(400, { deleteError: 'Type DELETE to confirm account deletion.' });
+		}
+
+		const userId = locals.user!.id;
+
+		let serviceKey: string | undefined;
+		try {
+			const env = await import('$env/dynamic/private');
+			serviceKey = env.env.SUPABASE_SERVICE_ROLE_KEY;
+		} catch {
+			// Missing server environment configuration is reported below.
+		}
+
+		if (!serviceKey) {
+			return fail(503, {
+				deleteError: 'Account deletion is not configured. Contact an administrator to complete deletion safely.'
+			});
+		}
+
+		try {
+			const { createClient } = await import('@supabase/supabase-js');
+			const adminClient = createClient(PUBLIC_SUPABASE_URL, serviceKey);
+			const { error: deletionError } = await adminClient.auth.admin.deleteUser(userId);
+			if (deletionError) {
+				console.error('Account deletion error:', deletionError.message);
+				return fail(400, { deleteError: 'Could not delete your account. Please try again or contact an administrator.' });
+			}
+		} catch (err) {
+			console.error('Account deletion error:', err);
+			return fail(500, { deleteError: 'Could not delete your account. Please try again or contact an administrator.' });
+		}
+
+		await locals.supabase.auth.signOut();
+		redirect(303, '/login?notice=account_deleted');
 	}
 };

@@ -33,7 +33,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 		redirect(303, '/setup?reason=profile');
 	}
 
-	const [savedResult, contributionResult, attemptResult, activityResult, myNotesResult] = await Promise.all([
+	const [savedResult, contributionResult, attemptResult, activityResult, myNotesResult, departmentResult] = await Promise.all([
 		supabase.from('bookmarks').select('*', { count: 'exact', head: true }).eq('user_id', locals.user.id),
 		supabase.from('notes').select('*', { count: 'exact', head: true }).eq('author_id', locals.user.id),
 		supabase.from('quiz_attempts').select('*', { count: 'exact', head: true }).eq('user_id', locals.user.id),
@@ -44,7 +44,8 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 			)
 			.order('created_at', { ascending: false })
 			.limit(6),
-		supabase.from('notes').select('id').eq('author_id', locals.user.id).limit(200)
+		supabase.from('notes').select('id').eq('author_id', locals.user.id).limit(200),
+		supabase.from('departments').select('*').order('sort_order')
 	]);
 
 	const myNoteIds = (myNotesResult.data ?? []).map((row) => row.id as string);
@@ -88,6 +89,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 	return {
 		user: locals.user,
 		profile,
+		departments: ((departmentResult.data ?? []) as unknown as import('$lib/types').Department[]),
 		counts: {
 			saved: savedResult.count ?? 0,
 			contributions: contributionResult.count ?? 0,

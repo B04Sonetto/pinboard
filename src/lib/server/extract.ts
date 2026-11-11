@@ -55,12 +55,20 @@ export async function extractFile(file: File): Promise<ExtractedFile> {
 	let text = '';
 
 	if (extension === 'pdf') {
+		// Magic bytes check for PDF: %PDF (0x25, 0x50, 0x44, 0x46)
+		if (buffer.length < 4 || buffer[0] !== 0x25 || buffer[1] !== 0x50 || buffer[2] !== 0x44 || buffer[3] !== 0x46) {
+			throw new Error('This file does not appear to be a valid PDF document (magic bytes mismatch).');
+		}
 		const { extractText } = await import('unpdf');
 		const result = await extractText(buffer, { mergePages: true });
 		text = Array.isArray(result.text) ? result.text.join('\n\n') : result.text;
 	} else if (extension === 'docx' || extension === 'doc') {
 		if (extension === 'doc') {
 			throw new Error('Legacy .doc files are not supported. Save the document as .docx or PDF and try again.');
+		}
+		// Magic bytes check for DOCX (ZIP archive): PK (0x50, 0x4B)
+		if (buffer.length < 4 || buffer[0] !== 0x50 || buffer[1] !== 0x4B) {
+			throw new Error('This file does not appear to be a valid DOCX document (magic bytes mismatch).');
 		}
 		const mammoth = await import('mammoth');
 		const result = await mammoth.extractRawText({ buffer: Buffer.from(buffer) });

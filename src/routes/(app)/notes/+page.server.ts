@@ -7,10 +7,14 @@ const PAGE_SIZE = 12;
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const supabase = locals.supabase;
 	const profile = locals.profile!;
-	const q = (url.searchParams.get('q') ?? '').trim();
+	const q = (url.searchParams.get('q') ?? '').trim().slice(0, 120);
 	const department = url.searchParams.get('department') ?? '';
+	const program = url.searchParams.get('program') ?? '';
 	const subject = url.searchParams.get('subject') ?? '';
 	const topic = url.searchParams.get('topic') ?? '';
+	const yearLevel = url.searchParams.get('year_level') ?? '';
+	const semester = url.searchParams.get('semester') ?? '';
+	const visibility = url.searchParams.get('visibility') ?? 'all';
 	const status = url.searchParams.get('status') ?? 'all';
 	const sort = url.searchParams.get('sort') ?? 'newest';
 	const mine = url.searchParams.get('mine') === '1';
@@ -18,31 +22,59 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	const taxonomy = await loadTaxonomy(supabase);
 
-	let query = supabase.from('notes').select(NOTE_CARD_SELECT, { count: 'exact' });
+	function applyFilters<T>(baseQuery: T): T {
+		let qry: any = baseQuery;
+		if (department) qry = qry.eq('department_id', department);
+		if (program) qry = qry.eq('program_id', program);
+		if (subject) qry = qry.eq('subject_id', subject);
+		if (topic) qry = qry.eq('topic_id', topic);
+		if (yearLevel) qry = qry.eq('year_level', Number.parseInt(yearLevel, 10));
+		if (semester) qry = qry.eq('semester', Number.parseInt(semester, 10));
+		if (visibility === 'community' || visibility === 'department') qry = qry.eq('visibility', visibility);
+		if (status === 'verified' || status === 'submitted' || status === 'rejected') qry = qry.eq('status', status);
+		if (mine) qry = qry.eq('author_id', locals.user!.id);
 
-	if (q) query = query.textSearch('search_vector', q, { type: 'websearch' });
-	if (department) query = query.eq('department_id', department);
-	if (subject) query = query.eq('subject_id', subject);
-	if (topic) query = query.eq('topic_id', topic);
-	if (status === 'verified' || status === 'submitted' || status === 'rejected') query = query.eq('status', status);
-	if (mine) query = query.eq('author_id', locals.user!.id);
-
-	switch (sort) {
-		case 'oldest':
-			query = query.order('created_at', { ascending: true });
-			break;
-		case 'popular':
-			query = query.order('downloads', { ascending: false });
-			break;
-		default:
-			query = query.order('created_at', { ascending: false });
+		switch (sort) {
+			case 'oldest':
+				qry = qry.order('created_at', { ascending: true });
+				break;
+			case 'popular':
+				qry = qry.order('downloads', { ascending: false });
+				break;
+			default:
+				qry = qry.order('created_at', { ascending: false });
+		}
+		return qry;
 	}
 
+	let query = applyFilters(supabase.from('notes').select(NOTE_CARD_SELECT, { count: 'exact' }));
+	if (q) query = query.textSearch('search_vector', q, { type: 'websearch' });
+
 	const from = (page - 1) * PAGE_SIZE;
-	const { data, count, error } = await query.range(from, from + PAGE_SIZE - 1);
+	let { data, count, error } = await query.range(from, from + PAGE_SIZE - 1);
+	let isFallback = false;
+
+	// Typo-tolerant fallback: if full-text search yields 0 results, fall back to ilike wildcard search
+	if ((count ?? 0) === 0 && q) {
+		const fallbackQuery = applyFilters(
+			supabase
+				.from('notes')
+				.select(NOTE_CARD_SELECT, { count: 'exact' })
+				.or(`title.ilike.%${q.replace(/[\\%_,().]/g, ' ')}%,summary.ilike.%${q.replace(/[\\%_,().]/g, ' ')}%`)
+		);
+		const fallbackResult = await fallbackQuery.range(from, from + PAGE_SIZE - 1);
+		if ((fallbackResult.count ?? 0) > 0) {
+			data = fallbackResult.data;
+			count = fallbackResult.count;
+			isFallback = true;
+		}
+	}
 
 	const notes = (data ?? []) as unknown as Note[];
 	const savedIds = await savedNoteIds(supabase, locals.user!.id, notes.map((note) => note.id));
+
+	const currentDepartment = taxonomy.departments.find((d) => d.id === department) ?? null;
+	const enrolledDepartment = taxonomy.departments.find((d) => d.id === profile.department_id) ?? null;
 
 	return {
 		notes,
@@ -51,7 +83,22 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		pageCount: Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE)),
 		savedIds: [...savedIds],
 		taxonomy,
-		filters: { q, department, subject, topic, status, sort, mine },
+		currentDepartment,
+		enrolledDepartment,
+		isFallback,
+		filters: {
+			q,
+			department,
+			program,
+			subject,
+			topic,
+			year_level: yearLevel,
+			semester,
+			visibility,
+			status,
+			sort,
+			mine
+		},
 		canModerate: profile.role === 'moderator' || profile.role === 'admin',
 		error: error && !/row-level|permission/i.test(error.message) ? error.message : null
 	};

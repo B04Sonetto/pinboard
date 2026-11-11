@@ -549,11 +549,16 @@ create policy "notes read" on public.notes for select to authenticated
 
 drop policy if exists "notes insert own" on public.notes;
 create policy "notes insert own" on public.notes for insert to authenticated
-  with check (author_id = auth.uid() and status = 'submitted' and origin = 'student');
+  with check (
+    author_id = auth.uid()
+    and status = 'submitted'
+    and origin = 'student'
+    and (public.current_department() is null or department_id = public.current_department())
+  );
 
 drop policy if exists "notes update" on public.notes;
 create policy "notes update" on public.notes for update to authenticated
-  using (public.is_moderator() or (author_id = auth.uid() and status = 'submitted'))
+  using (public.is_moderator() or (author_id = auth.uid() and status in ('submitted', 'rejected')))
   with check (
     public.is_moderator()
     or (author_id = auth.uid() and status = 'submitted' and origin = 'student')

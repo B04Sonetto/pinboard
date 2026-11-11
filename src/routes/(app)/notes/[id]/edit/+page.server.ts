@@ -25,12 +25,12 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	if (!noteResult.data) throw error(404, 'That note was not found, or it is not yours to edit.');
 	const note = noteResult.data as Note;
 
-	if (note.status !== 'submitted') {
+	if (note.status !== 'submitted' && note.status !== 'rejected') {
 		throw error(
 			403,
 			note.status === 'verified'
-				? 'Verified notes cannot be edited. Use “Submit a revision” from the note page to propose an update.'
-				: 'This note was returned for revision. Use “Fix and resubmit” from the note page so moderators can see the new version.'
+				? 'Verified notes cannot be edited directly. Use “Submit a revision” from the note page to propose an update.'
+				: 'This note cannot be edited.'
 		);
 	}
 
@@ -101,8 +101,8 @@ export const actions: Actions = {
 
 		if (currentError || !current) return fail(404, { error: 'That note no longer exists.', ...values });
 		if (current.author_id !== locals.user!.id) return fail(403, { error: 'You can only edit your own notes.', ...values });
-		if (current.status !== 'submitted') {
-			return fail(403, { error: 'Only notes awaiting review can be edited.', ...values });
+		if (current.status !== 'submitted' && current.status !== 'rejected') {
+			return fail(403, { error: 'Only notes awaiting review or returned for revision can be edited.', ...values });
 		}
 
 		const { data: subjectRow } = await locals.supabase.from('subjects').select('*').eq('id', subject).maybeSingle();
@@ -189,6 +189,8 @@ export const actions: Actions = {
 			content: body,
 			content_text: stripMarkdown(body),
 			visibility,
+			status: 'submitted',
+			moderator_note: null,
 			year_level: yearLevel ?? subjectData.year_level,
 			semester: semester ?? subjectData.semester,
 			keywords,
@@ -204,7 +206,7 @@ export const actions: Actions = {
 			.update(patch)
 			.eq('id', params.id)
 			.eq('author_id', locals.user!.id)
-			.eq('status', 'submitted')
+			.in('status', ['submitted', 'rejected'])
 			.select('id')
 			.maybeSingle();
 

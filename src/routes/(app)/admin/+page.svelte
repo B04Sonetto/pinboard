@@ -192,11 +192,94 @@
 				</ul>
 			</section>
 
+			<!-- Metrics: Review Queue Health -->
+			<section class="card p-4">
+				<div class="flex items-center gap-2">
+					<ShieldCheck size={17} class="text-[#1C7A50]" />
+					<h2 class="font-display text-lg font-extrabold">Queue health</h2>
+				</div>
+				<div class="mt-3 flex flex-col gap-2.5 text-[0.78rem]">
+					<div class="flex items-center justify-between border-b border-dashed border-ink/20 pb-2">
+						<span class="text-ink-soft">Open reports</span>
+						<span class="badge {data.analytics.openReports > 0 ? 'badge-rejected' : 'badge-verified'} !text-[0.6rem]">
+							{data.analytics.openReports} open
+						</span>
+					</div>
+					<div class="flex items-center justify-between border-b border-dashed border-ink/20 pb-2">
+						<span class="text-ink-soft">Reports this week</span>
+						<span class="font-mono text-[0.72rem] font-bold">{data.analytics.reportsLast7Days}</span>
+					</div>
+					<div>
+						<span class="text-ink-soft block text-[0.72rem]">Oldest pending contribution</span>
+						{#if data.analytics.oldestPending}
+							<div class="mt-1 rounded-lg border border-ink/20 bg-paper p-2">
+								<p class="font-bold line-clamp-1">{data.analytics.oldestPending.title}</p>
+								<p class="text-[0.64rem] text-ink-faint">Submitted {formatDate(data.analytics.oldestPending.created_at)}</p>
+								<a href="/moderation" class="link text-[0.68rem] font-bold mt-1 inline-block">Review in queue →</a>
+							</div>
+						{:else}
+							<p class="text-[0.72rem] italic text-ink-faint mt-0.5">Queue is empty. All notes reviewed!</p>
+						{/if}
+					</div>
+				</div>
+			</section>
+
+			<!-- Metrics: Most-Viewed Notes -->
+			<section class="card p-4 lg:col-span-2">
+				<div class="flex items-center gap-2">
+					<BookOpen size={17} />
+					<h2 class="font-display text-lg font-extrabold">Most viewed notes</h2>
+				</div>
+				{#if data.analytics.topNotes.length}
+					<ul class="mt-2 flex flex-col divide-y divide-dashed divide-ink/15">
+						{#each data.analytics.topNotes as topNote (topNote.id)}
+							<li class="flex items-center justify-between gap-3 py-2 text-[0.78rem]">
+								<div class="min-w-0 flex-1">
+									<a href="/notes/{topNote.id}" class="font-bold line-clamp-1 hover:underline">{topNote.title}</a>
+									<span class="text-[0.66rem] text-ink-soft">{topNote.subject?.code ?? 'General'}</span>
+								</div>
+								<div class="flex items-center gap-2.5 font-mono text-[0.68rem] text-ink-soft shrink-0">
+									<span>{topNote.views} views</span>
+									<span>{topNote.downloads} dl</span>
+								</div>
+							</li>
+						{/each}
+					</ul>
+				{:else}
+					<p class="mt-2 text-[0.74rem] text-ink-soft italic">No view metrics recorded yet.</p>
+				{/if}
+			</section>
+
+			<!-- Metrics: Top & Zero-Hit Searches -->
+			<section class="card p-4">
+				<div class="flex items-center gap-2">
+					<Search size={17} />
+					<h2 class="font-display text-lg font-extrabold">Search trends</h2>
+				</div>
+				{#if data.analytics.topSearches.length}
+					<ul class="mt-2 flex flex-col divide-y divide-dashed border-ink/15 text-[0.74rem]">
+						{#each data.analytics.topSearches as searchItem (searchItem.query)}
+							<li class="flex items-center justify-between py-1.5">
+								<span class="font-mono font-medium truncate max-w-[160px]">“{searchItem.query}”</span>
+								<span class="text-[0.65rem] font-mono shrink-0">
+									{searchItem.hits} hits
+									{#if searchItem.zero_hits > 0}
+										<span class="text-[#B42318]">({searchItem.zero_hits} 0-hit)</span>
+									{/if}
+								</span>
+							</li>
+						{/each}
+					</ul>
+				{:else}
+					<p class="mt-2 text-[0.74rem] text-ink-soft italic">No search logs yet.</p>
+				{/if}
+			</section>
+
 			<section class="rounded-xl border-2 border-ink bg-[#F3EDDD] p-4">
 				<p class="flex items-center gap-1.5 text-[0.8rem] font-bold"><AlertTriangle size={15} /> Admin responsibility</p>
 				<p class="mt-1 text-[0.72rem] leading-relaxed text-ink-soft">
-					Pinboard curriculum is community-built, not official university data. When adding subjects, cite public course
-					listings and keep community entries labeled honestly. Deleting taxonomy cascades to notes and topics.
+					This catalog is maintained for LSPU students. When adding subjects, follow the university's public course
+					listings and keep entries labeled honestly. Deleting taxonomy cascades to notes and topics.
 				</p>
 			</section>
 		</div>

@@ -1,9 +1,15 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { extractFile } from '$lib/server/extract';
+import { checkRateLimit } from '$lib/server/rate-limit';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.user) return json({ error: 'Sign in to upload notes.' }, { status: 401 });
+
+	// Rate limit: 15 extract requests per minute per user
+	if (!checkRateLimit(`extract:${locals.user.id}`, 15, 60_000)) {
+		return json({ error: 'Too many upload attempts. Please wait a minute before trying again.' }, { status: 429 });
+	}
 
 	let form: FormData;
 	try {

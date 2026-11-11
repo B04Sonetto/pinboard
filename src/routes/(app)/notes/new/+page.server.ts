@@ -25,11 +25,15 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			? taxonomy.subjects.find((subject) => subject.id === requestedSubject)
 			: undefined;
 
+	const userDeptId = locals.profile?.department_id ?? '';
+	const enrolledDepartment = taxonomy.departments.find((d) => d.id === userDeptId) ?? null;
+
 	return {
 		taxonomy,
 		revision,
+		enrolledDepartment,
 		defaults: {
-			department: revision?.department_id ?? presetSubject?.department_id ?? locals.profile?.department_id ?? '',
+			department: enrolledDepartment?.id ?? revision?.department_id ?? presetSubject?.department_id ?? '',
 			program: revision?.program_id ?? presetSubject?.program_id ?? locals.profile?.program_id ?? '',
 			subject: revision?.subject_id ?? presetSubject?.id ?? '',
 			year_level: revision?.year_level ?? locals.profile?.year_level ?? null,
@@ -72,6 +76,13 @@ export const actions: Actions = {
 		};
 
 		if (!department) return fail(400, { error: 'Choose a department.', ...values });
+		const userDeptId = locals.profile?.department_id;
+		if (userDeptId && department !== userDeptId) {
+			return fail(400, {
+				error: 'You can only post notes for your enrolled department. Cross-department posting is disabled.',
+				...values
+			});
+		}
 		if (!subject || !UUID.test(subject)) return fail(400, { error: 'Choose a subject for this note.', ...values });
 		if (title.length < 4) return fail(400, { error: 'Give the note a title of at least 4 characters.', ...values });
 		if (title.length > 200) return fail(400, { error: 'Keep the title under 200 characters.', ...values });
@@ -119,6 +130,20 @@ export const actions: Actions = {
 			.maybeSingle();
 		const subjectData = subjectRow as Subject | null;
 		if (!subjectData) return fail(400, { error: 'That subject no longer exists.', ...values });
+
+		if (userDeptId && subjectData.department_id !== userDeptId) {
+			return fail(400, {
+				error: 'The selected subject does not belong to your enrolled department.',
+				...values
+			});
+		}
+
+		if (!userDeptId && department) {
+			await locals.supabase
+				.from('profiles')
+				.update({ department_id: department })
+				.eq('id', locals.user!.id);
+		}
 
 		if (topic) {
 			const { data: topicRow } = await locals.supabase

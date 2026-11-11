@@ -19,9 +19,9 @@
 
 <div class="flex flex-col gap-6">
 	<PageHeader
-		kicker="Community-built curriculum"
+		kicker="LSPU course map"
 		title="Courses & lessons"
-		description="A student-maintained map of subjects, topics and notes. This is not the official university catalog — confirm your actual curriculum with your department."
+		description="Subjects, topics, and notes kept by Laguna State Polytechnic University students. Confirm your prospectus with your department."
 	>
 		<a href="/suggestions" class="btn btn-secondary">Suggest a course</a>
 		<a href="/notes/new" class="btn btn-primary">Write a note</a>
@@ -30,8 +30,8 @@
 	<div class="flex items-start gap-2 rounded-xl border-2 border-ink bg-[#F3EDDD] px-4 py-3">
 		<GraduationCap size={18} class="mt-0.5 shrink-0" />
 		<p class="text-[0.8rem] leading-relaxed text-ink-soft">
-			<strong class="text-ink">Community-submitted curriculum.</strong> Programs, subjects and topics are contributed by
-			students to organize notes. They may differ from the official prospectus or current semester offerings.
+			<strong class="text-ink">LSPU student curriculum map.</strong> Programs, subjects, and topics are organized by
+			students so notes are easy to find. They can differ from the current prospectus.
 		</p>
 	</div>
 

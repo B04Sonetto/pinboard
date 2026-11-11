@@ -135,7 +135,7 @@
 				<input type="hidden" name="tab" value="notes" />
 				<label class="flex min-w-[9rem] flex-1 flex-col">
 					<span class="label !text-[0.64rem]">Department</span>
-					<select class="select !min-h-9" name="department" onchange="this.form.submit()">
+					<select class="select !min-h-9" name="department" onchange={(e) => (e.currentTarget.form as HTMLFormElement)?.submit()}>
 						<option value="">All departments</option>
 						{#each data.departments as department (department.id)}
 							<option value={department.id} selected={data.filters.department === department.id}>{department.short_name}</option>
@@ -144,7 +144,7 @@
 				</label>
 				<label class="flex min-w-[9rem] flex-1 flex-col">
 					<span class="label !text-[0.64rem]">Subject</span>
-					<select class="select !min-h-9" name="subject" onchange="this.form.submit()">
+					<select class="select !min-h-9" name="subject" onchange={(e) => (e.currentTarget.form as HTMLFormElement)?.submit()}>
 						<option value="">All subjects</option>
 						{#each filteredSubjects as subject (subject.id)}
 							<option value={subject.id} selected={data.filters.subject === subject.id}>{subject.code}</option>

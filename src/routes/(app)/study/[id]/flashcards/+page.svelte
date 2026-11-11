@@ -4,8 +4,10 @@
 	import Badge from '$lib/components/Badge.svelte';
 	import {
 		ArrowLeft,
+		Check,
 		ChevronLeft,
 		ChevronRight,
+		Clock,
 		Layers,
 		RotateCcw,
 		Shuffle,
@@ -20,10 +22,55 @@
 	let order = $state<number[]>(untrack(() => original.map((_, index) => index)));
 	let position = $state(0);
 	let flipped = $state(false);
+	let onlyDue = $state(false);
+	let cardReviews = $state<Record<string, number>>({});
 
-	const card = $derived(original[order[position]]);
+	$effect(() => {
+		try {
+			const saved = localStorage.getItem(`pinboard_fc_reviews_${generation.id}`);
+			if (saved) {
+				cardReviews = JSON.parse(saved);
+			}
+		} catch {}
+	});
+
+	function saveReview(cardId: string, daysAhead: number) {
+		const nextDue = Date.now() + daysAhead * 24 * 60 * 60 * 1000;
+		cardReviews = { ...cardReviews, [cardId]: nextDue };
+		try {
+			localStorage.setItem(`pinboard_fc_reviews_${generation.id}`, JSON.stringify(cardReviews));
+		} catch {}
+		go(1);
+	}
+
+	function isDue(cardId: string): boolean {
+		const dueTime = cardReviews[cardId];
+		if (!dueTime) return true; // never reviewed -> due
+		return Date.now() >= dueTime;
+	}
+
+	const dueCardsCount = $derived(original.filter((c) => isDue(c.id)).length);
+
+	const activeIndices = $derived(
+		onlyDue
+			? original.map((c, i) => (isDue(c.id) ? i : -1)).filter((i) => i !== -1)
+			: original.map((_, i) => i)
+	);
+
+	const card = $derived(original[order[position] ?? 0]);
 	const total = $derived(order.length);
 	const progress = $derived(total ? Math.round(((position + 1) / total) * 100) : 0);
+
+	function toggleDueOnly() {
+		onlyDue = !onlyDue;
+		if (onlyDue) {
+			order = original.map((c, i) => (isDue(c.id) ? i : -1)).filter((i) => i !== -1);
+		} else {
+			order = original.map((_, index) => index);
+		}
+		position = 0;
+		flipped = false;
+	}
 
 	function go(delta: number) {
 		position = (position + delta + total) % total;
@@ -91,6 +138,15 @@
 			</p>
 		</div>
 		<div class="flex flex-wrap gap-2 no-print">
+			<button
+				type="button"
+				class="btn btn-sm"
+				class:btn-primary={onlyDue}
+				class:btn-secondary={!onlyDue}
+				onclick={toggleDueOnly}
+			>
+				<Clock size={14} /> Review due ({dueCardsCount})
+			</button>
 			<button type="button" class="btn btn-secondary btn-sm" onclick={shuffle}><Shuffle size={14} /> Shuffle</button>
 			<button type="button" class="btn btn-secondary btn-sm" onclick={reset}><RotateCcw size={14} /> Reset</button>
 		</div>
@@ -151,10 +207,46 @@
 			</button>
 		</div>
 
-		<div class="mt-4 flex items-center justify-between gap-3 no-print">
-			<button type="button" class="btn btn-secondary" onclick={() => go(-1)}><ChevronLeft size={16} /> Previous</button>
-			<button type="button" class="btn btn-secondary btn-sm" onclick={flip}>{flipped ? 'Show prompt' : 'Show answer'}</button>
-			<button type="button" class="btn btn-primary" onclick={() => go(1)}>Next <ChevronRight size={16} /></button>
+		<div class="mt-4 flex flex-col gap-2 no-print">
+			{#if flipped && card}
+				<div class="flex items-center justify-center gap-2 rounded-xl border-2 border-ink bg-paper p-2">
+					<span class="text-xs font-bold mr-1 text-ink-soft">Rate recall:</span>
+					<button
+						type="button"
+						class="btn btn-secondary btn-sm !text-xs !bg-coral-soft hover:!bg-coral"
+						onclick={(e) => { e.stopPropagation(); saveReview(card.id, 0); }}
+					>
+						Again (today)
+					</button>
+					<button
+						type="button"
+						class="btn btn-secondary btn-sm !text-xs !bg-marigold-soft hover:!bg-marigold"
+						onclick={(e) => { e.stopPropagation(); saveReview(card.id, 1); }}
+					>
+						Hard (1 day)
+					</button>
+					<button
+						type="button"
+						class="btn btn-secondary btn-sm !text-xs !bg-[#EFFBF3] hover:!bg-leaf"
+						onclick={(e) => { e.stopPropagation(); saveReview(card.id, 3); }}
+					>
+						Good (3 days)
+					</button>
+					<button
+						type="button"
+						class="btn btn-secondary btn-sm !text-xs !bg-sky-soft hover:!bg-sky"
+						onclick={(e) => { e.stopPropagation(); saveReview(card.id, 7); }}
+					>
+						Easy (7 days)
+					</button>
+				</div>
+			{/if}
+
+			<div class="flex items-center justify-between gap-3">
+				<button type="button" class="btn btn-secondary" onclick={() => go(-1)}><ChevronLeft size={16} /> Previous</button>
+				<button type="button" class="btn btn-secondary btn-sm" onclick={flip}>{flipped ? 'Show prompt' : 'Show answer'}</button>
+				<button type="button" class="btn btn-primary" onclick={() => go(1)}>Next <ChevronRight size={16} /></button>
+			</div>
 		</div>
 	</div>
 

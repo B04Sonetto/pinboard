@@ -24,7 +24,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 
 	await supabase.rpc('record_note_view', { target_note: note.id });
 
-	const [bookmark, related, report] = await Promise.all([
+	const [bookmark, subjectRelated, keywordRelated, report] = await Promise.all([
 		supabase.from('bookmarks').select('note_id').eq('user_id', locals.user!.id).eq('note_id', note.id).maybeSingle(),
 		supabase
 			.from('notes')
@@ -34,6 +34,15 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			.eq('status', 'verified')
 			.order('downloads', { ascending: false })
 			.limit(4),
+		note.keywords && note.keywords.length > 0
+			? supabase
+					.from('notes')
+					.select(NOTE_CARD_SELECT)
+					.overlaps('keywords', note.keywords)
+					.neq('id', note.id)
+					.eq('status', 'verified')
+					.limit(4)
+			: Promise.resolve({ data: [] }),
 		supabase
 			.from('reports')
 			.select('id, status')
@@ -43,13 +52,28 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			.maybeSingle()
 	]);
 
-	const relatedNotes = (related.data ?? []) as unknown as Note[];
-	const savedIds = await savedNoteIds(supabase, locals.user!.id, relatedNotes.map((item) => item.id));
+	// Prioritize notes with keyword overlap, then fill remaining slots with same-subject notes
+	const seenIds = new Set<string>();
+	const combinedRelated: Note[] = [];
+	for (const item of (keywordRelated.data ?? []) as unknown as Note[]) {
+		if (!seenIds.has(item.id)) {
+			seenIds.add(item.id);
+			combinedRelated.push(item);
+		}
+	}
+	for (const item of (subjectRelated.data ?? []) as unknown as Note[]) {
+		if (!seenIds.has(item.id) && combinedRelated.length < 4) {
+			seenIds.add(item.id);
+			combinedRelated.push(item);
+		}
+	}
+
+	const savedIds = await savedNoteIds(supabase, locals.user!.id, combinedRelated.map((item) => item.id));
 
 	return {
 		note,
 		saved: Boolean(bookmark.data),
-		related: relatedNotes,
+		related: combinedRelated,
 		savedIds: [...savedIds],
 		canModerate,
 		isAuthor,

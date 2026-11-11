@@ -32,7 +32,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		topNotesResult,
 		oldestPendingResult,
 		topSearchesResult,
-		openReportsResult
+		openReportsResult,
+		recentReportsResult
 	] = await Promise.all([
 		locals.supabase
 			.from('profiles')
@@ -60,7 +61,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.order('created_at', { ascending: true })
 			.maybeSingle(),
 		locals.supabase.rpc('top_searches', { p_limit: 8 }),
-		locals.supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'open')
+		locals.supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'open'),
+		locals.supabase
+			.from('reports')
+			.select('*', { count: 'exact', head: true })
+			.gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
 	]);
 
 	const users = (usersResult.data ?? []) as unknown as Profile[];
@@ -92,7 +97,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 					hits: number;
 					zero_hits: number;
 				}[])) ?? [],
-			openReports: openReportsResult.count ?? 0
+			openReports: openReportsResult.count ?? 0,
+			reportsLast7Days: recentReportsResult.count ?? 0
 		},
 		counts: {
 			users: users.length,
