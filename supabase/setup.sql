@@ -24,8 +24,11 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 do $$ begin
-  create type public.study_kind as enum ('reviewer', 'summary', 'quiz', 'keywords');
+  create type public.study_kind as enum ('reviewer', 'summary', 'quiz', 'exam', 'keywords');
 exception when duplicate_object then null; end $$;
+
+-- Upgrade path for projects created before exam mode was added.
+alter type public.study_kind add value if not exists 'exam';
 
 do $$ begin
   create type public.suggestion_kind as enum ('course', 'subject', 'lesson', 'correction', 'platform');

@@ -148,7 +148,7 @@
 									<span class="badge {percent >= 80 ? 'badge-verified' : percent >= 50 ? 'badge-submitted' : 'badge-rejected'} !text-[0.6rem]">
 										{percent}%
 									</span>
-									<a href="/study/{generation.id}/quiz" class="btn btn-secondary btn-sm">Retake</a>
+									<a href="/study/{generation.id}/{generation.kind === 'exam' ? 'exam' : 'quiz'}" class="btn btn-secondary btn-sm">Retake</a>
 									<a href="/study/{generation.id}" class="btn btn-ghost btn-sm">Review</a>
 								</div>
 							</li>

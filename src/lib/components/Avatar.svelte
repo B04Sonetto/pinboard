@@ -7,11 +7,13 @@
 		size = 36,
 		role
 	}: { name: string | null | undefined; color?: string | null; size?: number; role?: string } = $props();
+
+	const fill = $derived(color || '#FFD84D');
 </script>
 
 <span
 	class="avatar"
-	style="width:{size}px;height:{size}px;background:{color || '#FFD34D'};font-size:{Math.max(9, size * 0.28)}px"
+	style="width:{size}px;height:{size}px;background:{fill};font-size:{Math.max(10, size * 0.32)}px"
 	title={name ?? 'Student'}
 >
 	{initials(name)}

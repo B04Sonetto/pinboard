@@ -2,7 +2,7 @@ export type Role = 'student' | 'moderator' | 'admin';
 export type NoteStatus = 'submitted' | 'verified' | 'rejected';
 export type NoteVisibility = 'community' | 'department';
 export type NoteOrigin = 'student' | 'ai';
-export type StudyKind = 'reviewer' | 'summary' | 'quiz' | 'keywords';
+export type StudyKind = 'reviewer' | 'summary' | 'quiz' | 'exam' | 'keywords';
 export type StudyDifficulty = 'easy' | 'standard' | 'challenge';
 export type SuggestionKind = 'course' | 'subject' | 'lesson' | 'correction' | 'platform';
 export type SuggestionStatus = 'open' | 'under_review' | 'accepted' | 'declined';
@@ -14,6 +14,20 @@ export interface Department {
 	color: string;
 	description: string | null;
 	sort_order: number;
+}
+
+/** A tab on the /notes board: the community board, the student's own department, or another department they follow. */
+export interface BoardTab {
+	key: string;
+	/** Short label shown on the tab */
+	label: string;
+	/** Full name for tooltips and the page heading */
+	title: string;
+	color: string;
+	count: number;
+	kind: 'community' | 'own' | 'pinned' | 'temporary';
+	href: string;
+	departmentId: string | null;
 }
 
 export interface Program {
@@ -142,10 +156,35 @@ export interface Flashcard {
 	sourceTitle: string | null;
 }
 
+export interface IdentificationQuestion {
+	id: string;
+	prompt: string;
+	answer: string;
+	explanation: string;
+	sourceNoteId: string | null;
+	sourceTitle: string | null;
+}
+
+export interface EssayPrompt {
+	id: string;
+	prompt: string;
+	guidance: string;
+	sourceNoteId: string | null;
+	sourceTitle: string | null;
+}
+
+export interface ExamConfig {
+	timeLimitMinutes: number;
+	sections: string[];
+}
+
 export interface StudyPayload {
 	engine: string;
 	questions?: QuizQuestion[];
 	flashcards?: Flashcard[];
+	identification?: IdentificationQuestion[];
+	essays?: EssayPrompt[];
+	exam?: ExamConfig;
 	keywords?: { term: string; count: number; notes: string[] }[];
 	sources?: { id: string; title: string; status: NoteStatus }[];
 	options?: Record<string, unknown>;

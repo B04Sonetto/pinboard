@@ -201,7 +201,7 @@
 										{attempt.generation?.title ?? 'Practice quiz'}
 									</a>
 									<span class="text-[0.64rem] text-ink-faint">
-										{studyKindLabel('quiz')} · {formatDate(attempt.created_at)}
+										{attempt.generation?.kind === 'exam' ? 'Practice Exam' : studyKindLabel('quiz')} · {formatDate(attempt.created_at)}
 									</span>
 								</span>
 								<span class="shrink-0 rounded border-[1.5px] border-ink px-1.5 py-0.5 font-mono text-[0.65rem] font-bold"

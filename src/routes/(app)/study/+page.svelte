@@ -23,8 +23,10 @@
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
-	let kind = $state<'reviewer' | 'summary' | 'quiz' | 'keywords'>('reviewer');
+	let kind = $state<'reviewer' | 'summary' | 'quiz' | 'exam' | 'keywords'>('reviewer');
 	let difficulty = $state<'easy' | 'standard' | 'challenge'>('standard');
+	let examTime = $state('45');
+	let examSections = $state<string[]>(['multiple_choice', 'true_false', 'identification', 'essay']);
 	let department = $state(untrack(() => data.preset.department));
 	let subject = $state(untrack(() => data.preset.subject));
 	let topic = $state(untrack(() => data.preset.topic));
@@ -37,6 +39,7 @@
 		{ id: 'reviewer', label: 'Study reviewer', icon: ClipboardList, text: 'Structured key points, terms and self-checks.' },
 		{ id: 'summary', label: 'Lesson summary', icon: BookOpenCheck, text: 'A tighter read of the main ideas across notes.' },
 		{ id: 'quiz', label: 'Practice quiz', icon: FileQuestion, text: 'Multiple choice and true/false recall with answers.' },
+		{ id: 'exam', label: 'Practice exam', icon: ClipboardList, text: 'Timed exam with objective, identification and essay sections.' },
 		{ id: 'keywords', label: 'Keyword list', icon: Hash, text: 'Ranked terms with space to write definitions.' }
 	] as const;
 
@@ -261,9 +264,9 @@
 							<span class="label">Focus terms (optional)</span>
 							<input class="input" type="text" name="focus" placeholder="e.g. 3NF, anomalies" />
 						</label>
-						{#if kind === 'quiz'}
+						{#if kind === 'quiz' || kind === 'exam'}
 							<label class="flex flex-col">
-								<span class="label">Questions</span>
+								<span class="label">{kind === 'exam' ? 'Objective questions' : 'Questions'}</span>
 								<select class="select" name="question_count">
 									{#each [5, 8, 10, 12, 15] as count (count)}
 										<option value={String(count)} selected={count === 8}>{count} questions</option>
@@ -272,6 +275,28 @@
 							</label>
 						{:else}
 							<input type="hidden" name="question_count" value="8" />
+						{/if}
+						{#if kind === 'exam'}
+							<label class="flex flex-col">
+								<span class="label">Time limit</span>
+								<select class="select" name="exam_time" bind:value={examTime}>
+									{#each [15, 30, 45, 60, 90] as minutes (minutes)}
+										<option value={String(minutes)}>{minutes} minutes</option>
+									{/each}
+								</select>
+							</label>
+							<fieldset class="rounded-lg border border-ink/20 bg-paper p-2.5">
+								<legend class="label !mb-1">Exam sections</legend>
+								<div class="grid gap-1">
+									{#each [{ value: 'multiple_choice', label: 'Multiple choice' }, { value: 'true_false', label: 'True / false' }, { value: 'identification', label: 'Identification' }, { value: 'essay', label: 'Essay' }] as section (section.value)}
+										<label class="flex cursor-pointer items-center gap-2 text-[0.72rem] font-semibold">
+											<input type="checkbox" name="exam_sections" value={section.value} bind:group={examSections} class="h-3.5 w-3.5 accent-[#211D31]" />
+											{section.label}
+										</label>
+									{/each}
+								</div>
+								<span class="mt-1 block text-[0.62rem] leading-snug text-ink-soft">Multiple choice is always included. Essays are reviewed manually.</span>
+							</fieldset>
 						{/if}
 						<label class="flex flex-col">
 							<span class="label">Depth</span>

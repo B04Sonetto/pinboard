@@ -21,6 +21,7 @@
 		reviewer: ClipboardList,
 		summary: BookOpenCheck,
 		quiz: FileQuestion,
+		exam: ClipboardList,
 		keywords: Hash
 	};
 
@@ -29,6 +30,7 @@
 		{ value: 'reviewer', label: 'Reviewers' },
 		{ value: 'summary', label: 'Summaries' },
 		{ value: 'quiz', label: 'Quizzes' },
+		{ value: 'exam', label: 'Exams' },
 		{ value: 'keywords', label: 'Keywords' }
 	];
 
@@ -130,7 +132,7 @@
 							<span class="chip chip-soft !min-h-6 !text-[0.64rem]">{generation.topic.name}</span>
 						{/if}
 						<span class="chip chip-soft !min-h-6 !text-[0.64rem]">{generation.source_note_ids?.length ?? 0} sources</span>
-						{#if generation.kind === 'quiz'}
+						{#if generation.kind === 'quiz' || generation.kind === 'exam'}
 							<span class="badge {bestScore === null ? 'badge-neutral' : bestScore >= 80 ? 'badge-verified' : 'badge-submitted'} !text-[0.55rem]">
 								{bestScore === null ? 'Not attempted' : `Best ${bestScore}%`}
 							</span>

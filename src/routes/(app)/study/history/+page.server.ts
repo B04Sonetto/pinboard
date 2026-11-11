@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
 import type { StudyGeneration, StudyKind } from '$lib/types';
 
-const KINDS: StudyKind[] = ['reviewer', 'summary', 'quiz', 'keywords'];
+const KINDS: StudyKind[] = ['reviewer', 'summary', 'quiz', 'exam', 'keywords'];
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const kindParam = url.searchParams.get('kind') ?? '';

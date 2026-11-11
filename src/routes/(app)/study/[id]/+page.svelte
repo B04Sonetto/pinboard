@@ -29,6 +29,7 @@
 	const generation = $derived(data.generation);
 	const payload = $derived(data.payload);
 	const isQuiz = $derived(generation.kind === 'quiz' && (payload.questions?.length ?? 0) > 0);
+	const isExam = $derived(generation.kind === 'exam');
 	const difficulty = $derived(
 		typeof payload.options?.difficulty === 'string'
 			? studyDifficultyLabel(payload.options.difficulty as StudyDifficulty)
@@ -42,7 +43,9 @@
 				? BookOpenCheck
 				: generation.kind === 'quiz'
 					? FileQuestion
-					: Hash
+					: generation.kind === 'exam'
+						? ClipboardList
+						: Hash
 	);
 
 	const regenerateHref = $derived(
@@ -96,7 +99,7 @@
 					<span>Generated {formatDate(generation.created_at)}</span>
 					<span>{data.sources.length} source {data.sources.length === 1 ? 'note' : 'notes'}</span>
 					<span>{difficulty} depth</span>
-					{#if isQuiz}<span>{data.questionCount} questions</span>{/if}
+					{#if isQuiz || isExam}<span>{data.questionCount} objective questions</span>{/if}
 				</p>
 			</div>
 			<div class="flex flex-wrap gap-2 no-print">
@@ -105,6 +108,8 @@
 					{#if payload.flashcards?.length}
 						<a href="/study/{generation.id}/flashcards" class="btn btn-secondary"><Layers size={16} /> Flashcards</a>
 					{/if}
+				{:else if isExam}
+					<a href="/study/{generation.id}/exam" class="btn btn-primary"><Target size={16} /> Take the exam</a>
 				{/if}
 				<button type="button" class="btn btn-secondary" onclick={() => window.print()}><Printer size={16} /> Print</button>
 				<a href="/api/study/{generation.id}" class="btn btn-secondary"><Download size={16} /> Download .md</a>
@@ -144,6 +149,34 @@
 					{#if data.attempts.length}
 						<div class="border-t-2 border-ink bg-[#F3EDDD] px-5 py-3">
 							<p class="font-mono text-[0.58rem] uppercase tracking-[0.08em] text-ink-soft">Best score so far</p>
+							<div class="mt-1.5 flex items-center gap-3">
+								<span class="stat-value !text-2xl">{data.bestPercent}%</span>
+								<div class="h-2.5 w-full max-w-xs overflow-hidden rounded-full border-2 border-ink bg-paper">
+									<div class="h-full bg-leaf" style="width: {data.bestPercent}%"></div>
+								</div>
+							</div>
+						</div>
+					{/if}
+				</section>
+			{/if}
+
+			{#if isExam}
+				<section class="card mt-5 overflow-hidden">
+					<div class="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+						<div>
+							<p class="kicker !text-[0.6rem]">Timed practice</p>
+							<h2 class="mt-1 font-display text-lg font-extrabold">Take this exam under time pressure</h2>
+							<p class="mt-1 max-w-lg text-[0.78rem] leading-relaxed text-ink-soft">
+								{payload.exam?.timeLimitMinutes ?? 45} minute limit · {data.questionCount} objective items
+								{#if payload.identification?.length} · {payload.identification.length} identification{/if}
+								{#if payload.essays?.length} · {payload.essays.length} essay prompt{payload.essays.length === 1 ? '' : 's'}{/if}
+							</p>
+						</div>
+						<a href="/study/{generation.id}/exam" class="btn btn-primary shrink-0"><Target size={16} /> Start exam</a>
+					</div>
+					{#if data.attempts.length}
+						<div class="border-t-2 border-ink bg-[#F3EDDD] px-5 py-3">
+							<p class="font-mono text-[0.58rem] uppercase tracking-[0.08em] text-ink-soft">Best objective score</p>
 							<div class="mt-1.5 flex items-center gap-3">
 								<span class="stat-value !text-2xl">{data.bestPercent}%</span>
 								<div class="h-2.5 w-full max-w-xs overflow-hidden rounded-full border-2 border-ink bg-paper">

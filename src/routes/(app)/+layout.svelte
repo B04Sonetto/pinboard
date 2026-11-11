@@ -1,7 +1,5 @@
 <script lang="ts">
-	import AppSidebar from '$lib/components/AppSidebar.svelte';
-	import AppTopbar from '$lib/components/AppTopbar.svelte';
-	import MobileNav from '$lib/components/MobileNav.svelte';
+	import AppNavbar from '$lib/components/AppNavbar.svelte';
 	import type { Activity, Department, Profile } from '$lib/types';
 
 	let {
@@ -18,36 +16,32 @@
 		};
 		children: import('svelte').Snippet;
 	} = $props();
-
-	let mobileOpen = $state(false);
 </script>
 
-<div class="flex min-h-dvh">
-	<AppSidebar profile={data.profile} departments={data.departments} counts={data.counts} bind:open={mobileOpen} />
+<a
+	href="#main"
+	class="sr-only z-[200] rounded-lg border-[2.5px] border-ink bg-marigold px-4 py-2 text-sm font-bold focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+>
+	Skip to content
+</a>
 
-	<div class="flex min-h-dvh min-w-0 flex-1 flex-col">
-		<AppTopbar
-			profile={data.profile}
-			activity={data.recentActivity}
-			notifications={data.notifications}
-			unread={data.unreadNotifications}
-			onMenu={() => (mobileOpen = true)}
-		/>
+<div class="flex min-h-dvh flex-col">
+	<AppNavbar
+		profile={data.profile}
+		counts={data.counts}
+		activity={data.recentActivity}
+		notifications={data.notifications}
+		unread={data.unreadNotifications}
+	/>
 
-		<main class="mx-auto w-full max-w-[1460px] flex-1 px-4 pb-24 pt-6 sm:px-6 sm:pt-8 lg:px-8 lg:pb-10">
-			{@render children()}
-		</main>
+	<main id="main" class="mx-auto w-full max-w-[1280px] flex-1 px-4 pb-14 pt-8 sm:px-6 lg:px-10">
+		{@render children()}
+	</main>
 
-		<footer class="mx-auto w-full max-w-[1460px] px-4 pb-24 sm:px-6 lg:px-8 lg:pb-6">
-			<div class="flex flex-col gap-2 border-t-2 border-dashed border-ink/20 pt-4 text-[0.68rem] leading-relaxed text-ink-soft sm:flex-row sm:items-center sm:justify-between">
-				<p class="max-w-2xl">
-					Pinboard is the study board for Laguna State Polytechnic University. Courses, lessons, and notes are
-					shared by LSPU students — confirm graded requirements with your instructor.
-				</p>
-				<p class="font-mono text-[0.6rem] uppercase tracking-[0.12em] text-ink-faint">LSPU · Built by students, for students</p>
-			</div>
-		</footer>
-	</div>
-
-	<MobileNav onMore={() => (mobileOpen = true)} />
+	<footer class="mx-auto w-full max-w-[1280px] px-4 pb-8 sm:px-6 lg:px-10">
+		<p class="max-w-[720px] text-[0.8125rem] leading-relaxed text-ink-soft">
+			Pinboard is an independent community platform. Courses, lessons and notes are submitted by students and
+			are not official university curriculum.
+		</p>
+	</footer>
 </div>

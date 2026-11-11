@@ -84,6 +84,8 @@ export function studyKindLabel(kind: StudyKind): string {
 			return 'Lesson Summary';
 		case 'quiz':
 			return 'Practice Quiz';
+		case 'exam':
+			return 'Practice Exam';
 		case 'keywords':
 			return 'Keyword List';
 	}
@@ -117,8 +119,29 @@ export function greeting(date = new Date()): string {
 	return 'Good evening';
 }
 
+export const DEFAULT_NOTE_COLOR = '#FFE680';
+
 export function departmentTint(hex: string | null | undefined): string {
-	return hex || '#FFD34D';
+	return hex || DEFAULT_NOTE_COLOR;
+}
+
+/** Small stable hash so a note always gets the same tilt and pin colour. */
+function hashId(id: string): number {
+	let hash = 0;
+	for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
+	return Math.abs(hash);
+}
+
+const NOTE_TILTS = [-1.6, 1.2, -0.8, 1.8, -1.2, 0.9];
+const PIN_COLORS = ['#E5484D', '#2F6FDB', '#1F8A5B', '#F59E0B'];
+
+/** Rotation in degrees for a sticky note, derived from its id (stable across renders and pages). */
+export function noteTilt(id: string): number {
+	return NOTE_TILTS[hashId(id) % NOTE_TILTS.length];
+}
+
+export function pinColor(id: string): string {
+	return PIN_COLORS[(hashId(id) >> 3) % PIN_COLORS.length];
 }
 
 export function truncate(text: string | null | undefined, length = 160): string {

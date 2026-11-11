@@ -1,4 +1,13 @@
-import type { Flashcard, NoteStatus, QuizQuestion, StudyDifficulty, StudyKind, StudyPayload } from '$lib/types';
+import type {
+	EssayPrompt,
+	Flashcard,
+	IdentificationQuestion,
+	NoteStatus,
+	QuizQuestion,
+	StudyDifficulty,
+	StudyKind,
+	StudyPayload
+} from '$lib/types';
 import { extractKeywords, tokenize } from '$lib/keywords';
 import { stripMarkdown, truncate } from '$lib/utils';
 
@@ -20,6 +29,8 @@ export interface StudyOptions {
 	questionCount?: number;
 	focus?: string;
 	difficulty?: StudyDifficulty;
+	examTimeLimit?: number;
+	examSections?: string[];
 }
 
 export interface StudyResult {
@@ -537,6 +548,153 @@ function buildKeywords(sources: StudySource[], options: StudyOptions): StudyResu
 	};
 }
 
+const EXAM_SECTIONS = ['multiple_choice', 'true_false', 'identification', 'essay'] as const;
+
+function resolveExamSections(options: StudyOptions): string[] {
+	const requested = options.examSections?.filter((section) =>
+		(EXAM_SECTIONS as readonly string[]).includes(section)
+	);
+	const sections = requested?.length ? [...new Set(requested)] : [...EXAM_SECTIONS];
+	if (!sections.includes('multiple_choice')) sections.unshift('multiple_choice');
+	return sections;
+}
+
+function buildIdentification(
+	sources: StudySource[],
+	options: StudyOptions,
+	limit: number
+): IdentificationQuestion[] {
+	const items: IdentificationQuestion[] = [];
+	const used = new Set<string>();
+	const pool = extractKeywords(combinedText(sources, options), 36).map((item) => item.term);
+
+	for (const source of sources) {
+		const sentences = splitSentences(source.content);
+		const terms = (source.keywords?.length ? source.keywords : pool).slice(0, 12);
+		for (const term of terms) {
+			if (items.length >= limit) break;
+			const key = term.toLowerCase();
+			if (used.has(key) || term.length < 3) continue;
+			const pattern = new RegExp(`\\b${escapeRegex(term)}\\b`, 'i');
+			const sentence = sentences.find((candidate) => pattern.test(candidate));
+			if (!sentence) continue;
+			const promptText = sentence.replace(pattern, '_____');
+			if (!promptText.includes('_____')) continue;
+			used.add(key);
+			items.push({
+				id: `i${items.length + 1}`,
+				prompt: `Identify the missing term: “${truncate(promptText, 320)}”`,
+				answer: term,
+				explanation: `The source says: “${truncate(sentence, 300)}”`,
+				sourceNoteId: noteIdFor(source),
+				sourceTitle: source.title
+			});
+		}
+	}
+
+	return items;
+}
+
+function buildEssays(sources: StudySource[]): EssayPrompt[] {
+	return sources.slice(0, 3).map((source, index) => ({
+		id: `e${index + 1}`,
+		prompt: `Explain the key ideas in “${source.title}” and give one example or application.`,
+		guidance: source.summary
+			? `Use the source summary as a starting point: ${truncate(source.summary, 220)}`
+			: 'Use at least two key ideas from the source and explain them in your own words.',
+		sourceNoteId: noteIdFor(source),
+		sourceTitle: source.title
+	}));
+}
+
+function buildExam(sources: StudySource[], options: StudyOptions): StudyResult {
+	const sections = resolveExamSections(options);
+	const objective = buildQuiz(sources, options);
+	const allQuestions = objective.payload.questions ?? [];
+	const includeTrueFalse = sections.includes('true_false');
+	const questions = allQuestions.filter((question) => includeTrueFalse || question.type !== 'tf');
+	const identification = sections.includes('identification')
+		? buildIdentification(
+				sources,
+				options,
+				Math.max(2, Math.min(8, Math.round((options.questionCount ?? 10) / 3)))
+			)
+		: [];
+	const essays = sections.includes('essay') ? buildEssays(sources) : [];
+	const requestedTime = Number(options.examTimeLimit ?? 45);
+	const timeLimitMinutes = Number.isFinite(requestedTime)
+		? Math.min(180, Math.max(5, Math.round(requestedTime)))
+		: 45;
+
+	const actualSections = [
+		...(questions.length ? ['multiple_choice', ...(questions.some((question) => question.type === 'tf') ? ['true_false'] : [])] : []),
+		...(identification.length ? ['identification'] : []),
+		...(essays.length ? ['essay'] : [])
+	];
+
+	const contentParts: string[] = [
+		'# Practice exam',
+		'',
+		`**Time limit:** ${timeLimitMinutes} minutes · **Objective items:** ${questions.length + identification.length} · **Essay prompts:** ${essays.length}`,
+		'',
+		'Answer every section. The answer key is checked when you submit the interactive exam.',
+		'',
+		'## Part I — Objective questions'
+	];
+
+	if (questions.length) {
+		questions.forEach((question, index) => {
+			const optionsList = question.options
+				.map((option, optionIndex) => `${String.fromCharCode(65 + optionIndex)}. ${option}`)
+				.join('\n');
+			contentParts.push(`### ${index + 1}. ${question.prompt}`, '', optionsList, '');
+		});
+	} else {
+		contentParts.push('_No objective questions could be generated from these notes._', '');
+	}
+
+	if (identification.length) {
+		contentParts.push('## Part II — Identification', '');
+		identification.forEach((question, index) => {
+			contentParts.push(`### ${index + 1}. ${question.prompt}`, '', 'Answer: ______________________________', '');
+		});
+	}
+
+	if (essays.length) {
+		contentParts.push('## Part III — Essay', '');
+		essays.forEach((essay, index) => {
+			contentParts.push(`### ${index + 1}. ${essay.prompt}`, '', `_${essay.guidance}_`, '', 'Answer:', '');
+		});
+	}
+
+	contentParts.push(
+		'---',
+		'',
+		'> This is a machine-generated practice exam from community notes. Essay answers are not automatically scored. Check your work against the source notes and your instructor\'s discussion.'
+	);
+
+	return {
+		title: `Practice exam: ${sources[0]?.title ?? 'Study notes'}`,
+		content: contentParts.join('\n'),
+		payload: {
+			engine: ENGINE,
+			questions,
+			identification,
+			essays,
+			exam: { timeLimitMinutes, sections: actualSections },
+			sources: sources.map((source) => ({ id: source.id, title: source.title, status: source.status })),
+			options: {
+				questionCount: questions.length,
+				identificationCount: identification.length,
+				essayCount: essays.length,
+				difficulty: options.difficulty ?? 'standard',
+				examTimeLimit: timeLimitMinutes,
+				examSections: actualSections
+			}
+		}
+	};
+}
+
 export function generateStudy(kind: StudyKind, sources: StudySource[], options: StudyOptions = {}): StudyResult {
 	if (sources.length === 0) {
 		throw new Error('Choose at least one community note before generating study material.');
@@ -548,6 +706,8 @@ export function generateStudy(kind: StudyKind, sources: StudySource[], options: 
 			return buildReviewer(sources, options);
 		case 'quiz':
 			return buildQuiz(sources, options);
+		case 'exam':
+			return buildExam(sources, options);
 		case 'keywords':
 			return buildKeywords(sources, options);
 	}

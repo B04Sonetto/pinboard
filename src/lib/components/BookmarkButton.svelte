@@ -8,8 +8,16 @@
 		noteId,
 		saved: initialSaved = false,
 		size = 18,
-		label = true
-	}: { noteId: string; saved?: boolean; size?: number; label?: boolean } = $props();
+		label = true,
+		variant = 'button'
+	}: {
+		noteId: string;
+		saved?: boolean;
+		size?: number;
+		label?: boolean;
+		/** 'plain' is a bare 44px icon button, used on sticky notes. */
+		variant?: 'button' | 'plain';
+	} = $props();
 
 	let saved = $state(untrack(() => initialSaved));
 	let busy = $state(false);
@@ -51,8 +59,10 @@
 
 <button
 	type="button"
-	class="btn btn-secondary btn-sm"
-	style={saved ? 'background:#FFD34D' : ''}
+	class={variant === 'plain'
+		? 'flex h-11 w-11 items-center justify-center rounded-md border-0 bg-transparent text-ink transition hover:bg-black/5 disabled:opacity-60'
+		: 'btn btn-secondary btn-sm'}
+	style={variant === 'button' && saved ? 'background:#FFD84D' : ''}
 	aria-pressed={saved}
 	aria-label={saved ? 'Remove from My Collection' : 'Save to My Collection'}
 	title={saved ? 'Remove from My Collection' : 'Save to My Collection'}

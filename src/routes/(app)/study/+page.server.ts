@@ -7,7 +7,7 @@ import { stripMarkdown } from '$lib/utils';
 import { checkRateLimit } from '$lib/server/rate-limit';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const KINDS: StudyKind[] = ['reviewer', 'summary', 'quiz', 'keywords'];
+const KINDS: StudyKind[] = ['reviewer', 'summary', 'quiz', 'exam', 'keywords'];
 const DIFFICULTIES: StudyDifficulty[] = ['easy', 'standard', 'challenge'];
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -80,13 +80,28 @@ export const actions: Actions = {
 		const ownNotes = String(form.get('own_notes') ?? '').trim().slice(0, 30_000);
 		const focus = String(form.get('focus') ?? '').trim().slice(0, 240);
 		const questionCount = Number.parseInt(String(form.get('question_count') ?? '8'), 10) || 8;
+		const examTimeLimit = Number.parseInt(String(form.get('exam_time') ?? '45'), 10) || 45;
+		const examSections = form
+			.getAll('exam_sections')
+			.map((value) => String(value))
+			.filter((value) => ['multiple_choice', 'true_false', 'identification', 'essay'].includes(value));
 		const difficultyRaw = String(form.get('difficulty') ?? 'standard') as StudyDifficulty;
 		const difficulty = DIFFICULTIES.includes(difficultyRaw) ? difficultyRaw : 'standard';
 		const departmentId = String(form.get('department_id') ?? '') || null;
 		const subjectId = String(form.get('subject_id') ?? '') || null;
 		const topicId = String(form.get('topic_id') ?? '') || null;
 
-		const values = { kind, department: departmentId ?? '', subject: subjectId ?? '', topic: topicId ?? '', focus, question_count: String(questionCount), difficulty, own_notes_len: String(ownNotes.length) };
+		const values = {
+			kind,
+			department: departmentId ?? '',
+			subject: subjectId ?? '',
+			topic: topicId ?? '',
+			focus,
+			question_count: String(questionCount),
+			exam_time: String(examTimeLimit),
+			difficulty,
+			own_notes_len: String(ownNotes.length)
+		};
 
 		if (!KINDS.includes(kind)) return fail(400, { error: 'Choose a study material type.', ...values });
 		if (noteIds.length === 0 && ownNotes.length < 80) {
@@ -134,7 +149,9 @@ export const actions: Actions = {
 				ownNotes: sources.some((source) => source.id === 'own-notes') ? '' : ownNotes,
 				questionCount,
 				focus,
-				difficulty
+				difficulty,
+				examTimeLimit,
+				examSections
 			});
 		} catch (error) {
 			return fail(400, {
