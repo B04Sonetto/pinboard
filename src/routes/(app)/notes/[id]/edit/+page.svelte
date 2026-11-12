@@ -86,11 +86,11 @@
 
 <div class="flex flex-col gap-6">
 	<PageHeader
-		kicker={note.status === 'rejected' ? 'Fix and resubmit' : 'While it is awaiting review'}
+		kicker={note.status === 'rejected' ? 'Fix and republish' : 'Published note'}
 		title={note.status === 'rejected' ? 'Revise your note' : 'Edit your note'}
 		description={note.status === 'rejected'
-			? 'Address the moderator feedback below and resubmit your note. It will be re-queued for verification.'
-			: 'You can revise a submitted note as often as you need before a moderator reviews it. Changes are saved in place.'}
+			? 'Address the moderator feedback below and republish your note. It will be visible again immediately.'
+			: 'Changes are saved in place and go live as soon as you save them.'}
 	>
 		<a href="/notes/{note.id}" class="btn btn-secondary"><ArrowLeft size={15} /> Back to note</a>
 	</PageHeader>
@@ -104,8 +104,7 @@
 		<div class="rounded-xl border-2 border-ink bg-marigold-soft p-4">
 			<p class="flex items-center gap-2 text-sm font-bold"><Info size={16} /> Editing: {note.title}</p>
 			<p class="mt-1 text-[0.78rem] leading-relaxed text-ink-soft">
-				Submitted {formatDate(note.created_at)}. Once verified, use “Submit a revision” instead so the verified version stays
-				available.
+				Published {formatDate(note.created_at)}. Changes go live immediately.
 			</p>
 		</div>
 	{/if}
@@ -304,7 +303,7 @@
 					<legend class="sr-only">Who should see this note?</legend>
 					<label class="flex cursor-pointer items-start gap-2 rounded-lg border-2 border-ink/30 bg-paper p-2.5 has-[:checked]:border-ink has-[:checked]:bg-marigold-soft">
 						<input type="radio" name="visibility" value="community" bind:group={visibility} class="mt-0.5 h-4 w-4 accent-[#211D31]" />
-						<span><span class="block text-[0.78rem] font-bold">Community-wide</span><span class="block text-[0.68rem] leading-snug text-ink-soft">Visible to all signed-in students once verified.</span></span>
+						<span><span class="block text-[0.78rem] font-bold">Community-wide</span><span class="block text-[0.68rem] leading-snug text-ink-soft">Visible to all signed-in students.</span></span>
 					</label>
 					<label class="flex cursor-pointer items-start gap-2 rounded-lg border-2 border-ink/30 bg-paper p-2.5 has-[:checked]:border-ink has-[:checked]:bg-marigold-soft">
 						<input type="radio" name="visibility" value="department" bind:group={visibility} class="mt-0.5 h-4 w-4 accent-[#211D31]" />
@@ -317,18 +316,18 @@
 						<span class="h-4 w-4 animate-spin rounded-full border-2 border-ink/30 border-t-ink"></span>
 						Saving…
 					{:else}
-						<Save size={17} /> {note.status === 'rejected' ? 'Resubmit for review' : 'Save changes'}
+						<Save size={17} /> {note.status === 'rejected' ? 'Republish note' : 'Save changes'}
 					{/if}
 				</button>
 				<a href="/notes/{note.id}" class="btn btn-ghost btn-sm mt-2 w-full">Cancel</a>
 			</section>
 
 			<section class="rounded-xl border-2 border-ink bg-[#F3EDDD] p-4">
-				<p class="text-[0.78rem] font-bold">{note.status === 'rejected' ? 'Re-enters review queue' : 'Still awaiting review'}</p>
+				<p class="text-[0.78rem] font-bold">{note.status === 'rejected' ? 'Publishes immediately' : 'Live as soon as you save'}</p>
 				<p class="mt-1 text-[0.72rem] leading-relaxed text-ink-soft">
 					{note.status === 'rejected'
-						? 'Saving will reset status to submitted so a moderator can verify your updated note.'
-						: 'Your changes do not skip the queue. A moderator will still review this note before it becomes Community Verified.'}
+						? 'Saving republishes this note so your classmates can see the updated version right away.'
+						: 'There is no approval queue. Your edits replace the published note immediately.'}
 				</p>
 			</section>
 		</aside>

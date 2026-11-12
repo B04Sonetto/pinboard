@@ -210,7 +210,7 @@
 						<span class="font-mono text-[0.72rem] font-bold">{data.analytics.reportsLast7Days}</span>
 					</div>
 					<div>
-						<span class="text-ink-soft block text-[0.72rem]">Oldest pending contribution</span>
+						<span class="text-ink-soft block text-[0.72rem]">Oldest pending note</span>
 						{#if data.analytics.oldestPending}
 							<div class="mt-1 rounded-lg border border-ink/20 bg-paper p-2">
 								<p class="font-bold line-clamp-1">{data.analytics.oldestPending.title}</p>
@@ -218,7 +218,7 @@
 								<a href="/moderation" class="link text-[0.68rem] font-bold mt-1 inline-block">Review in queue →</a>
 							</div>
 						{:else}
-							<p class="text-[0.72rem] italic text-ink-faint mt-0.5">Queue is empty. All notes reviewed!</p>
+							<p class="text-[0.72rem] italic text-ink-faint mt-0.5">No notes waiting for review.</p>
 						{/if}
 					</div>
 				</div>

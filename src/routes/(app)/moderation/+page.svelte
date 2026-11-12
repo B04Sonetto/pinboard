@@ -83,13 +83,13 @@
 			<p class="kicker">Moderation</p>
 			<h1 class="display mt-1 text-[2rem] leading-[1.05] sm:text-[2.6rem]">Review queue</h1>
 			<p class="mt-2 max-w-2xl text-[0.92rem] leading-relaxed text-ink-soft">
-				Keep the academic map trustworthy. Verify notes against class discussion, route curriculum suggestions, and close
-				reports with a clear reason.
+				Notes publish immediately. Keep the academic map trustworthy by routing curriculum suggestions, reviewing reports,
+				and returning content that breaks the rules.
 			</p>
 		</div>
 		<div class="flex flex-wrap items-center gap-2">
-			<span class="badge badge-verified !text-[0.58rem]"><CheckCircle2 size={11} /> {data.counts.verified} verified notes</span>
-			<a href="/notes?status=submitted" class="btn btn-secondary btn-sm">See all submitted</a>
+			<span class="badge badge-verified !text-[0.58rem]"><CheckCircle2 size={11} /> {data.counts.verified} published notes</span>
+			<a href="/notes" class="btn btn-secondary btn-sm">Browse published notes</a>
 		</div>
 	</header>
 
@@ -107,7 +107,7 @@
 	<div class="grid grid-cols-3 gap-3">
 		<div class="card flex items-center gap-2.5 p-3">
 			<span class="flex h-8 w-8 items-center justify-center rounded border-2 border-ink bg-marigold-soft"><StickyNote size={15} /></span>
-			<div><p class="stat-value !text-xl">{data.counts.notes}</p><p class="text-[0.63rem] font-semibold text-ink-soft">Notes waiting</p></div>
+			<div><p class="stat-value !text-xl">{data.counts.notes}</p><p class="text-[0.63rem] font-semibold text-ink-soft">In review queue</p></div>
 		</div>
 		<div class="card flex items-center gap-2.5 p-3">
 			<span class="flex h-8 w-8 items-center justify-center rounded border-2 border-ink bg-sky"><Lightbulb size={15} /></span>
@@ -267,7 +267,7 @@
 		{:else}
 			<EmptyState
 				title="Note queue is clear"
-				description="No community notes are waiting for review. New submissions will appear here."
+				description="No community notes are waiting for review. New notes publish immediately."
 				icon={CheckCircle2}
 			>
 				<a href="/notes" class="btn btn-secondary btn-sm">Browse published notes</a>

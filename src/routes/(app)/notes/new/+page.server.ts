@@ -225,7 +225,7 @@ export const actions: Actions = {
 				content: body,
 				content_text: stripMarkdown(body),
 				visibility,
-				status: 'submitted',
+				status: 'verified',
 				origin: 'student',
 				year_level: yearLevel ?? subjectData.year_level,
 				semester: semester ?? subjectData.semester,
@@ -249,6 +249,6 @@ export const actions: Actions = {
 			});
 		}
 
-		redirect(303, `/notes/${inserted.id}?notice=submitted`);
+		redirect(303, `/notes/${inserted.id}?notice=published`);
 	}
 };

@@ -104,8 +104,8 @@
 					</div>
 				{:else}
 					<EmptyState
-						title="No verified notes yet"
-						description="New notes appear here once a moderator reviews them. You can still browse and contribute notes today."
+						title="No notes yet"
+						description="New notes appear here as soon as students publish them. You can be the first to contribute."
 						icon={StickyNote}
 					>
 						<a href="/notes/new" class="btn btn-primary btn-sm">Write the first note</a>

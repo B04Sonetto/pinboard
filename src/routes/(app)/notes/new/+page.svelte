@@ -175,10 +175,10 @@
 			<button type="submit" class="btn btn-primary btn-sm" disabled={submitting || uploading}>
 				{#if submitting}
 					<span class="h-4 w-4 animate-spin rounded-full border-2 border-ink/30 border-t-ink"></span>
-					Submitting…
+					Publishing…
 				{:else}
 					<FileText size={16} aria-hidden="true" />
-					{data.revision ? 'Submit revision' : 'Submit for review'}
+					{data.revision ? 'Publish revision' : 'Publish note'}
 				{/if}
 			</button>
 		</div>
@@ -188,7 +188,7 @@
 		<div class="rounded-lg border-[2.5px] border-ink bg-marigold-soft p-4">
 			<p class="flex items-center gap-2 text-sm font-bold"><Sparkles size={16} /> Revising: {data.revision.title}</p>
 			<p class="mt-1 text-sm leading-relaxed text-ink-mid">
-				This creates a fresh submission. The original note stays as-is until a moderator reviews the revision.
+				This creates a fresh published note. The original note stays as-is.
 			</p>
 		</div>
 	{/if}
@@ -522,8 +522,8 @@
 				<p class="flex items-start gap-2 text-sm leading-relaxed text-ink-mid">
 					<Info size={15} class="mt-1 shrink-0" aria-hidden="true" />
 					<span>
-						Submissions start as <strong class="text-ink">Community Submitted</strong>. A moderator checks them before they
-						become <strong class="text-ink">Community Verified</strong>.
+						Notes are <strong class="text-ink">published immediately</strong>. Moderators can still return or remove content
+						that breaks the community rules.
 					</span>
 				</p>
 			</section>

@@ -11,7 +11,7 @@
 
 	const features = [
 		{ icon: BookOpenCheck, text: 'Notes, lessons and reviewers from every department' },
-		{ icon: BadgeCheck, text: 'Community Verified labels, reviewed by student moderators' },
+		{ icon: BadgeCheck, text: 'Published notes from students across every department' },
 		{ icon: Sparkles, text: 'AI study material built only from the notes you choose' },
 		{ icon: Layers3, text: 'Organized by program, year level, semester and subject' }
 	];

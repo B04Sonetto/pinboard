@@ -118,7 +118,10 @@ Open the Supabase Dashboard, go to SQL Editor, and run the contents of:
 
 This creates the tables, enums, indexes, PostgreSQL functions, Row Level Security policies, and storage setup needed by the app.
 
-For an existing database, also run [`supabase/migrations/20261115000000_generation_owner_updates.sql`](supabase/migrations/20261115000000_generation_owner_updates.sql) in the Supabase SQL Editor to enable owner-only editing of generated reviewers.
+For an existing database, also run these migrations in the Supabase SQL Editor:
+
+- [`supabase/migrations/20261115000000_generation_owner_updates.sql`](supabase/migrations/20261115000000_generation_owner_updates.sql) to enable owner-only editing of generated reviewers.
+- [`supabase/migrations/20261117000000_notes_auto_publish.sql`](supabase/migrations/20261117000000_notes_auto_publish.sql) to publish notes immediately instead of waiting for moderator approval.
 
 If practice exams fail with `invalid input value for enum study_kind: "exam"`, run this in the SQL Editor:
 

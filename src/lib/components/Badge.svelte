@@ -20,5 +20,5 @@
 	{:else if status === 'rejected'}
 		<span aria-hidden="true" class="text-[0.7rem] leading-none">×</span>
 	{/if}
-	{#if !compact}{label}{:else}{origin === 'ai' ? 'AI' : status === 'verified' ? 'Verified' : 'Submitted'}{/if}
+	{#if !compact}{label}{:else}{origin === 'ai' ? 'AI' : status === 'verified' ? 'Published' : 'Submitted'}{/if}
 </span>

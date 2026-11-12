@@ -129,7 +129,7 @@ create table if not exists public.notes (
   content text,
   content_text text,
   visibility public.note_visibility not null default 'community',
-  status public.note_status not null default 'submitted',
+  status public.note_status not null default 'verified',
   origin public.note_origin not null default 'student',
   year_level integer check (year_level between 1 and 6),
   semester integer check (semester in (1, 2)),
@@ -545,26 +545,35 @@ create policy "notes read" on public.notes for select to authenticated
     or public.is_moderator()
   );
 
+-- Notes publish immediately. Only moderators may stamp verification metadata.
 drop policy if exists "notes insert own" on public.notes;
 create policy "notes insert own" on public.notes for insert to authenticated
   with check (
     author_id = auth.uid()
-    and status = 'submitted'
     and origin = 'student'
     and (public.current_department() is null or department_id = public.current_department())
+    and (
+      public.is_moderator()
+      or (status in ('submitted', 'verified') and verified_by is null)
+    )
   );
 
 drop policy if exists "notes update" on public.notes;
 create policy "notes update" on public.notes for update to authenticated
-  using (public.is_moderator() or (author_id = auth.uid() and status in ('submitted', 'rejected')))
+  using (public.is_moderator() or author_id = auth.uid())
   with check (
     public.is_moderator()
-    or (author_id = auth.uid() and status = 'submitted' and origin = 'student')
+    or (
+      author_id = auth.uid()
+      and origin = 'student'
+      and status in ('submitted', 'verified')
+      and verified_by is null
+    )
   );
 
 drop policy if exists "notes delete" on public.notes;
 create policy "notes delete" on public.notes for delete to authenticated
-  using (public.is_moderator() or (author_id = auth.uid() and status = 'submitted'));
+  using (public.is_moderator() or author_id = auth.uid());
 
 -- Bookmarks
 drop policy if exists "bookmarks read own" on public.bookmarks;

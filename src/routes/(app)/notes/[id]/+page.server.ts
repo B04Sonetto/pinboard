@@ -21,6 +21,9 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const profile = locals.profile!;
 	const canModerate = profile.role === 'moderator' || profile.role === 'admin';
 	const isAuthor = note.author_id === locals.user!.id;
+	// Auto-published notes stay editable. Notes stamped by a moderator use the
+	// "submit a revision" flow instead so the verification is not overwritten.
+	const canEdit = isAuthor && (note.status === 'rejected' || !note.verified_by);
 
 	await supabase.rpc('record_note_view', { target_note: note.id });
 
@@ -77,6 +80,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		savedIds: [...savedIds],
 		canModerate,
 		isAuthor,
+		canEdit,
 		alreadyReported: Boolean(report.data),
 		notice: url.searchParams.get('notice')
 	};
@@ -115,17 +119,14 @@ export const actions: Actions = {
 		if (!canModerate && note.author_id !== locals.user!.id) {
 			return fail(403, { actionError: 'You can only delete notes you created.' });
 		}
-		if (!canModerate && note.status !== 'submitted') {
-			return fail(403, { actionError: 'Only your notes awaiting review can be deleted.' });
-		}
 
 		let deleteQuery = locals.supabase.from('notes').delete().eq('id', params.id);
 		if (!canModerate) {
-			deleteQuery = deleteQuery.eq('author_id', locals.user!.id).eq('status', 'submitted');
+			deleteQuery = deleteQuery.eq('author_id', locals.user!.id);
 		}
 		const { data: deleted, error: deleteError } = await deleteQuery.select('id').maybeSingle();
 		if (deleteError || !deleted) {
-			return fail(400, { actionError: 'Could not delete this note. Make sure it is still yours and awaiting review.' });
+			return fail(400, { actionError: 'Could not delete this note. Make sure it is still yours.' });
 		}
 
 		if (note?.file_path) {

@@ -72,8 +72,7 @@
 	const roleLabel = $derived(profile.role === 'admin' ? 'Administrator' : profile.role === 'moderator' ? 'Moderator' : 'Student');
 
 	const statusCounts = $derived([
-		{ label: 'Verified', value: data.stats.verified, tone: 'badge-verified' },
-		{ label: 'Awaiting review', value: data.stats.submitted, tone: 'badge-submitted' },
+		{ label: 'Published', value: data.stats.verified, tone: 'badge-verified' },
 		{ label: 'Needs revision', value: data.stats.rejected, tone: 'badge-rejected' }
 	]);
 
@@ -146,7 +145,7 @@
 		<div class="card p-3.5">
 			<p class="kicker !text-[0.56rem]">Notes shared</p>
 			<p class="stat-value mt-1 !text-2xl">{data.stats.notes}</p>
-			<p class="mt-0.5 text-[0.62rem] text-ink-soft">{data.stats.verified} verified</p>
+			<p class="mt-0.5 text-[0.62rem] text-ink-soft">{data.stats.verified} published</p>
 		</div>
 		<div class="card p-3.5">
 			<p class="kicker !text-[0.56rem]">Saved notes</p>
@@ -206,7 +205,7 @@
 										</span>
 										<span class="flex shrink-0 flex-col items-end gap-1">
 											<span class="badge {note.status === 'verified' ? 'badge-verified' : note.status === 'rejected' ? 'badge-rejected' : 'badge-submitted'} !text-[0.52rem]">
-												{note.status}
+												{note.status === 'verified' ? 'Published' : note.status === 'rejected' ? 'Needs revision' : 'Submitted'}
 											</span>
 											{#if note.origin === 'ai'}<span class="badge badge-ai !px-1 !py-0 !text-[0.5rem]">AI</span>{/if}
 										</span>
@@ -515,8 +514,8 @@
 			<div class="rounded-xl border-2 border-ink bg-[#F3EDDD] p-4">
 				<p class="flex items-center gap-1.5 text-[0.8rem] font-bold"><BookMarked size={15} /> Labels matter</p>
 				<p class="mt-1 text-[0.7rem] leading-relaxed text-ink-soft">
-					Notes carry one of three labels: <strong>Community Submitted</strong>, <strong>Community Verified</strong>, or
-					<strong>AI Generated</strong>. None of them mean the material is official university curriculum.
+					Notes are labeled <strong>Published</strong> or <strong>Needs revision</strong>, and AI-assisted material is marked
+					<strong>AI Generated</strong>. None of these labels mean the material is official university curriculum.
 				</p>
 			</div>
 		</aside>

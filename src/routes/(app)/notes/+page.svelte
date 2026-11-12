@@ -178,13 +178,12 @@
 		{/if}
 
 		<label>
-			<span class="sr-only">Verification status</span>
+			<span class="sr-only">Publication status</span>
 			<select class="filter-pill" name="status" data-active={data.filters.status !== 'all'}>
 				<option value="all">Any status</option>
-				<option value="verified" selected={data.filters.status === 'verified'}>Verified only</option>
-				<option value="submitted" selected={data.filters.status === 'submitted'}>Submitted</option>
+				<option value="verified" selected={data.filters.status === 'verified'}>Published</option>
 				{#if data.canModerate}
-					<option value="rejected" selected={data.filters.status === 'rejected'}>Rejected</option>
+					<option value="rejected" selected={data.filters.status === 'rejected'}>Returned</option>
 				{/if}
 			</select>
 		</label>
@@ -396,8 +395,7 @@
 	<!-- Stamp legend -->
 	<div class="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-ink-mid">
 		<span class="kicker">What the stamps mean</span>
-		<span class="flex items-center gap-2"><span class="stamp stamp-submitted !text-[0.7rem]">Submitted</span> Awaiting review</span>
-		<span class="flex items-center gap-2"><span class="stamp stamp-verified !text-[0.7rem]">Verified</span> Checked by moderators</span>
+		<span class="flex items-center gap-2"><span class="stamp stamp-verified !text-[0.7rem]">Published</span> Visible to the community</span>
 		<span class="flex items-center gap-2"><span class="stamp stamp-ai !text-[0.7rem]">AI Generated</span> Built from community notes</span>
 	</div>
 </div>

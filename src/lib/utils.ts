@@ -53,7 +53,7 @@ export function pluralize(count: number, singular: string, plural?: string) {
 export function statusLabel(status: NoteStatus): string {
 	switch (status) {
 		case 'verified':
-			return 'Community Verified';
+			return 'Published';
 		case 'submitted':
 			return 'Community Submitted';
 		case 'rejected':

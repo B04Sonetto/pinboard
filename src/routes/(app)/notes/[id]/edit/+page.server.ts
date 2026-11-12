@@ -26,12 +26,14 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	if (!noteResult.data) throw error(404, 'That note was not found, or it is not yours to edit.');
 	const note = noteResult.data as Note;
 
-	if (note.status !== 'submitted' && note.status !== 'rejected') {
+	const canEdit =
+		note.status === 'submitted' ||
+		note.status === 'rejected' ||
+		(note.status === 'verified' && !note.verified_by);
+	if (!canEdit) {
 		throw error(
 			403,
-			note.status === 'verified'
-				? 'Verified notes cannot be edited directly. Use “Submit a revision” from the note page to propose an update.'
-				: 'This note cannot be edited.'
+			'Moderator-verified notes cannot be edited directly. Use “Submit a revision” from the note page to propose an update.'
 		);
 	}
 
@@ -99,14 +101,21 @@ export const actions: Actions = {
 
 		const { data: current, error: currentError } = await locals.supabase
 			.from('notes')
-			.select('id, author_id, status, file_path')
+			.select('id, author_id, status, verified_by, file_path')
 			.eq('id', params.id)
 			.maybeSingle();
 
 		if (currentError || !current) return fail(404, { error: 'That note no longer exists.', ...values });
 		if (current.author_id !== locals.user!.id) return fail(403, { error: 'You can only edit your own notes.', ...values });
-		if (current.status !== 'submitted' && current.status !== 'rejected') {
-			return fail(403, { error: 'Only notes awaiting review or returned for revision can be edited.', ...values });
+		const canEdit =
+			current.status === 'submitted' ||
+			current.status === 'rejected' ||
+			(current.status === 'verified' && !current.verified_by);
+		if (!canEdit) {
+			return fail(403, {
+				error: 'Moderator-verified notes can only be updated through “Submit a revision”.',
+				...values
+			});
 		}
 
 		const { data: subjectRow } = await locals.supabase.from('subjects').select('*').eq('id', subject).maybeSingle();
@@ -207,7 +216,7 @@ export const actions: Actions = {
 			content: body,
 			content_text: stripMarkdown(body),
 			visibility,
-			status: 'submitted',
+			status: 'verified',
 			verified_at: null,
 			verified_by: null,
 			moderator_note: null,
@@ -226,7 +235,6 @@ export const actions: Actions = {
 			.update(patch)
 			.eq('id', params.id)
 			.eq('author_id', locals.user!.id)
-			.in('status', ['submitted', 'rejected'])
 			.select('id')
 			.maybeSingle();
 

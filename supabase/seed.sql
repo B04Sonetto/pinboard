@@ -281,7 +281,7 @@ $note$,
  array['normalization','1nf','2nf','3nf','primary key','functional dependency','anomalies','database design'],
  now() - interval '18 days', '11111111-1111-4111-8111-111111111110', now() - interval '24 days', now() - interval '18 days', 48, 312),
 
--- 2. Networking (submitted)
+-- 2. Networking (published)
 ('dddddddd-0000-4000-8000-000000000002',
  '11111111-1111-4111-8111-111111111102', 'cs', 'aaaaaaaa-0000-4000-8000-000000000001',
  'bbbbbbbb-0000-4000-8000-000000000002', 'cccccccc-0000-4000-8000-000000000004',
@@ -353,7 +353,7 @@ A switch forwards by MAC address; a router forwards by IP address. DNS resolves 
 
 Practice converting /27 and /29 to subnet masks and count hosts before checking the answer key.
 $note$,
- 'community', 'submitted', 'student', 2, 1,
+ 'community', 'verified', 'student', 2, 1,
  array['osi model','tcp/ip','subnetting','ports','dns','dhcp','networking'],
  null, null, now() - interval '2 days', now() - interval '2 days', 6, 44),
 
@@ -581,7 +581,7 @@ Draw and label the particles of a solid, liquid and gas. Explain why a gas fills
 
 Objectives that say understand or know are hard to assess. Replace them with an action students can perform and you can observe.
 $note$,
- 'community', 'submitted', 'student', 3, 1,
+ 'community', 'verified', 'student', 3, 1,
  array['lesson plan','learning objectives','motivation','assessment','teaching strategies','grade 5 science'],
  null, null, now() - interval '1 day', now() - interval '1 day', 4, 29),
 
@@ -747,7 +747,7 @@ Beginning work in process is 1,000 units at 40 percent complete. Started is 5,00
 
 Classify the costing system. Separate direct costs from overhead. Compute the predetermined rate. Apply overhead to the job or department. Reconcile applied versus actual overhead. For process costing, compute equivalent units before dividing costs.
 $note$,
- 'department', 'submitted', 'student', 2, 2,
+ 'department', 'verified', 'student', 2, 2,
  array['job order costing','process costing','overhead','equivalent units','cost accounting'],
  null, null, now() - interval '4 days', now() - interval '4 days', 3, 21),
 
@@ -905,7 +905,7 @@ Tip: When you do not know an answer, say what you would test next. Panels reward
 
 Charge the laptop and pack the charger. Export slides to PDF as a backup. Bring a USB with the build, database dump and documentation. Sleep. A calm demo beats one more feature.
 $note$,
- 'community', 'submitted', 'student', 4, 1,
+ 'community', 'verified', 'student', 4, 1,
  array['capstone','defense','demo','documentation','panel questions'],
  null, null, now() - interval '3 days', now() - interval '3 days', 9, 87),
 
@@ -1167,7 +1167,7 @@ Tip: Sleep is part of studying. Memory consolidation happens during sleep, so an
 
 After a study session, ask whether you could explain this to someone without notes. If not, the next session should be retrieval, not re-reading.
 $note$,
- 'community', 'submitted', 'student', 1, 1,
+ 'community', 'verified', 'student', 1, 1,
  array['memory','retrieval practice','spaced repetition','interleaving','metacognition','study strategies'],
  null, null, now() - interval '6 hours', now() - interval '6 hours', 2, 18),
 
@@ -1345,7 +1345,7 @@ Join on keys, not on names. Put the table you want to keep in the FROM clause wh
 
 Exam tip: If the count is higher than expected after a join, look for a one-to-many relationship before blaming the GROUP BY.
 $note$,
- 'community', 'submitted', 'ai', 2, 1,
+ 'community', 'verified', 'ai', 2, 1,
  array['sql joins','inner join','left join','right join','full outer join','database queries'],
  null, null, now() - interval '12 hours', now() - interval '12 hours', 1, 12),
 
@@ -1415,7 +1415,7 @@ The functions are a cycle, not a checklist. Control feeds back into planning. A 
 
 Exam tip: If a question describes a manager setting standards and comparing results, the answer is controlling, even if the word control never appears.
 $note$,
- 'community', 'submitted', 'student', 1, 1,
+ 'community', 'verified', 'student', 1, 1,
  array['management','planning','organizing','leading','controlling'],
  null, null, now() - interval '30 hours', now() - interval '30 hours', 5, 33)
 

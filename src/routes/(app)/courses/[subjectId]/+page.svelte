@@ -64,7 +64,7 @@
 
 		<div class="mt-5 grid grid-cols-3 gap-2 border-t-2 border-dashed border-ink/20 pt-4">
 			<div><div class="stat-value !text-lg">{noteTotal}</div><div class="text-[0.65rem] font-bold uppercase tracking-[0.08em] text-ink-soft">Visible notes</div></div>
-			<div><div class="stat-value !text-lg">{data.verifiedCount}</div><div class="text-[0.65rem] font-bold uppercase tracking-[0.08em] text-ink-soft">Verified</div></div>
+			<div><div class="stat-value !text-lg">{data.verifiedCount}</div><div class="text-[0.65rem] font-bold uppercase tracking-[0.08em] text-ink-soft">Published</div></div>
 			<div><div class="stat-value !text-lg">{data.topics.length}</div><div class="text-[0.65rem] font-bold uppercase tracking-[0.08em] text-ink-soft">Topics</div></div>
 		</div>
 	</header>
@@ -108,7 +108,7 @@
 			{:else}
 				<EmptyState
 					title={data.filters.topic ? 'No notes under this topic yet' : 'No notes for this subject yet'}
-					description="Be the first to share a reviewer, formula sheet or lesson summary. Notes are reviewed before they are verified."
+					description="Be the first to share a reviewer, formula sheet or lesson summary. Notes are published immediately."
 					icon={StickyNote}
 				>
 					<a href="/notes/new?subject={data.subject.id}" class="btn btn-primary btn-sm">Write the first note</a>

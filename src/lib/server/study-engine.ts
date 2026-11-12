@@ -216,7 +216,7 @@ function buildReviewer(sources: StudySource[], options: StudyOptions): StudyResu
 		const points = rankedSentences(source.content, level(options).reviewerPoints, focus);
 		contentParts.push(`## ${index + 1}. ${source.title}`);
 		contentParts.push(
-			`**Where it comes from:** ${noteLabel(source)} · ${source.status === 'verified' ? 'Community Verified' : 'Community Submitted'} · ${sentenceLink(source)}`,
+			`**Where it comes from:** ${noteLabel(source)} · ${source.status === 'verified' ? 'Published' : 'Community Submitted'} · ${sentenceLink(source)}`,
 			''
 		);
 		if (source.summary) contentParts.push(source.summary, '');

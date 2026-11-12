@@ -86,13 +86,13 @@
 		<div class="flex items-center gap-2 rounded-xl border-2 border-[#B42318] bg-[#FFF1EF] px-4 py-3 text-sm font-semibold text-[#8f1c12]">
 			<XCircle size={17} /> Note returned to the author for revision.
 		</div>
-	{:else if data.notice === 'submitted'}
+	{:else if data.notice === 'published' || data.notice === 'submitted'}
 		<div class="flex items-center gap-2 rounded-xl border-2 border-[#1C7A50] bg-[#EFFBF3] px-4 py-3 text-sm font-semibold text-[#155c3c]">
-			<CheckCircle2 size={17} /> Note submitted. A moderator will review it before it appears community-wide.
+			<CheckCircle2 size={17} /> Note published. It is now visible to the community.
 		</div>
 	{:else if data.notice === 'edited'}
 		<div class="flex items-center gap-2 rounded-xl border-2 border-[#1C7A50] bg-[#EFFBF3] px-4 py-3 text-sm font-semibold text-[#155c3c]">
-			<CheckCircle2 size={17} /> Changes saved. The note is still awaiting moderator review.
+			<CheckCircle2 size={17} /> Changes saved and published.
 		</div>
 	{/if}
 
@@ -147,8 +147,8 @@
 			<span>{readingTime(note.content)}</span>
 			<span class="flex items-center gap-1"><Eye size={13} /> {note.views} views</span>
 			<span class="flex items-center gap-1"><Download size={13} /> {note.downloads} downloads</span>
-			{#if note.status === 'verified' && note.verified_at}
-				<span class="flex items-center gap-1 font-semibold text-[#155c3c]" title="Reviewed and approved by a moderator">
+			{#if note.status === 'verified' && note.verified_by && note.verified_at}
+				<span class="flex items-center gap-1 font-semibold text-[#155c3c]" title="Checked by a moderator">
 					<ShieldCheck size={14} class="text-[#1C7A50]" />
 					Verified{#if note.verifier} by {note.verifier.full_name}{#if note.verifier.role !== 'student'} ({note.verifier.role}){/if}{/if} · {formatDate(note.verified_at)}
 				</span>
@@ -270,7 +270,7 @@
 					</p>
 				{:else}
 					<p class="mt-2 rounded-lg border border-dashed border-ink/25 bg-paper px-2.5 py-2 text-center text-[0.68rem] leading-relaxed text-ink-soft">
-						Study material becomes available after a moderator verifies this note.
+						Study material becomes available once this note is published.
 					</p>
 				{/if}
 			</div>
@@ -285,7 +285,7 @@
 					<div class="flex items-center justify-between gap-3"><dt class="text-ink-soft">Semester</dt><dd class="font-semibold">{semesterLabel(note.semester)}</dd></div>
 					<div class="flex items-center justify-between gap-3"><dt class="text-ink-soft">Updated</dt><dd class="font-semibold">{formatDate(note.updated_at)}</dd></div>
 				</dl>
-				{#if note.verified_at}
+				{#if note.verified_by && note.verified_at}
 					<div class="mt-3 rounded-lg border border-[#1C7A50]/40 bg-[#EFFBF3] px-2 py-1.5 text-[0.68rem] font-semibold text-[#155c3c]">
 						<p class="flex items-center gap-1.5"><CheckCircle2 size={13} /> Verified {formatDate(note.verified_at)}</p>
 						{#if note.verifier}
@@ -359,16 +359,14 @@
 				<div class="card p-4">
 					<p class="kicker !text-[0.6rem]">Author actions</p>
 					<p class="mt-1 text-[0.74rem] leading-relaxed text-ink-soft">
-						{#if note.status === 'submitted'}This note is waiting for moderator review. You can still fix typos or add detail.{:else if note.status === 'verified'}Your note is verified and visible to the community. Propose an update without removing the verified version.{:else}Revise the note based on the feedback above, then resubmit it for review.{/if}
+						{#if note.status === 'rejected'}Revise the note based on the feedback above, then publish it again.{:else if note.verified_by}Your note is published and was checked by a moderator. Propose an update without removing the verified version.{:else}Your note is published and visible to the community. You can edit or delete it at any time.{/if}
 					</p>
-					{#if note.status === 'submitted'}
-						<a href="/notes/{note.id}/edit" class="btn btn-primary btn-sm mt-2 w-full"><PenLine size={14} /> Edit note</a>
-					{:else if note.status === 'rejected'}
-						<a href="/notes/{note.id}/edit" class="btn btn-primary btn-sm mt-2 w-full"><PenLine size={14} /> Fix and resubmit</a>
+					{#if data.canEdit}
+						<a href="/notes/{note.id}/edit" class="btn btn-primary btn-sm mt-2 w-full"><PenLine size={14} /> {note.status === 'rejected' ? 'Fix and republish' : 'Edit note'}</a>
 					{:else}
 						<a href="/notes/new?from={note.id}" class="btn btn-secondary btn-sm mt-2 w-full"><PenLine size={14} /> Submit a revision</a>
 					{/if}
-					{#if note.status === 'submitted'}
+					{#if data.canEdit}
 						<form method="POST" action="?/delete" use:enhance={({ cancel }) => { if (!confirm('Delete this note permanently?')) { cancel(); return; } return async ({ update }) => { await update(); }; }}>
 							<button type="submit" class="btn btn-ghost btn-sm mt-1 w-full !text-[#B42318]"><Trash2 size={14} /> Delete note</button>
 						</form>
