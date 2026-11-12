@@ -95,7 +95,7 @@
 	<div class="mx-auto flex min-h-[72px] max-w-[1360px] items-center gap-x-6 px-4 py-2 sm:px-6 lg:px-10">
 		<Logo size={30} />
 
-		<nav aria-label="Main" class="hidden flex-1 flex-wrap items-center gap-x-[18px] xl:flex">
+		<nav aria-label="Main" class="hidden min-w-0 flex-1 flex-nowrap items-center justify-center gap-x-[18px] 2xl:flex">
 			{#each links as link (link.href)}
 				<a href={link.href} class="topnav-link" aria-current={isActive(link.href) ? 'page' : undefined}>
 					<span>{link.label}</span>
@@ -104,7 +104,7 @@
 		</nav>
 
 		<div class="ml-auto flex items-center gap-2.5 sm:gap-3">
-			{@render searchBox('nav-search', 'hidden w-[190px] xl:block')}
+			{@render searchBox('nav-search', 'hidden w-[190px] 2xl:block')}
 
 			<a
 				href="/collection"
@@ -165,7 +165,7 @@
 
 			<button
 				type="button"
-				class="btn btn-secondary btn-icon xl:hidden"
+				class="btn btn-secondary btn-icon 2xl:hidden"
 				aria-label={menuOpen ? 'Close menu' : 'Open menu'}
 				aria-expanded={menuOpen}
 				aria-controls="mobile-menu"
@@ -177,7 +177,7 @@
 	</div>
 
 	{#if menuOpen}
-		<div id="mobile-menu" class="border-t-[3px] border-ink bg-paper-card px-4 pb-5 pt-3 sm:px-6 xl:hidden">
+		<div id="mobile-menu" class="border-t-[3px] border-ink bg-paper-card px-4 pb-5 pt-3 sm:px-6 2xl:hidden">
 			{@render searchBox('mobile-search', 'mb-3')}
 			<nav aria-label="Main" class="flex flex-col">
 				{#each links as link (link.href)}

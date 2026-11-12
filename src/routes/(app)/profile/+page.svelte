@@ -94,7 +94,7 @@
 <div class="flex flex-col gap-6">
 	<!-- Identity -->
 	<section class="card overflow-hidden">
-		<div class="relative h-28 border-b-2 border-ink bg-[#F3EDDD] sm:h-36">
+		<div class="relative h-28 bg-[#F3EDDD] sm:h-36">
 			<div class="absolute inset-0 opacity-60" style="background-image: radial-gradient(rgba(33,29,49,0.12) 1.5px, transparent 1.5px); background-size: 18px 18px;"></div>
 			<span class="pin-dot absolute left-8 top-6" style="--pin-color:#E5484D"></span>
 			<span class="pin-dot absolute right-16 top-9" style="--pin-color:#5130B8"></span>

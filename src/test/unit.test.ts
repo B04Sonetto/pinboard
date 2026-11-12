@@ -11,12 +11,14 @@ import {
 	readingTime
 } from '../lib/utils.js';
 import { extensionOf, isSupportedFile } from '../lib/server/extract.js';
+import { generateStudy, type StudySource } from '../lib/server/study-engine.js';
 
 describe('Pinboard Academic Engine Tests', () => {
 	describe('LSPU student email validation', () => {
 		it('accepts the required student number format regardless of letter case', () => {
 			assert.strictEqual(isLspuStudentEmail('0324-0574@lspu.edu.ph'), true);
 			assert.strictEqual(isLspuStudentEmail('0324-0574@LSPU.EDU.PH'), true);
+			assert.strictEqual(isLspuStudentEmail('0000-0000@lspu.edu.ph'), true);
 		});
 
 		it('normalizes common input mistakes without accepting other domains', () => {
@@ -44,6 +46,92 @@ describe('Pinboard Academic Engine Tests', () => {
 			assert.ok(keywords.length > 0);
 			const terms = keywords.map((k) => k.term);
 			assert.ok(terms.includes('relational') || terms.includes('database'));
+		});
+	});
+
+	describe('AI quiz generation', () => {
+		const sources: StudySource[] = [
+			{
+				id: 'note-database',
+				title: 'Database design',
+				status: 'verified',
+				content: [
+					'Normalization organizes a relational database so each fact is stored in exactly one place.',
+					'First normal form requires atomic values and removes repeating groups from every database table.',
+					'Second normal form removes partial dependencies from relations that use a composite primary key.',
+					'Third normal form removes transitive dependencies between non-key columns in a database.'
+				].join(' ')
+			},
+			{
+				id: 'note-networking',
+				title: 'Network fundamentals',
+				status: 'verified',
+				content: [
+					'The OSI model describes seven layers that organize communication between connected computer systems.',
+					'Routers forward internet protocol packets between separate networks using logical addresses.',
+					'Domain name system servers translate human-readable hostnames into network addresses.',
+					'Transmission control protocol retransmits lost data and provides reliable ordered delivery.'
+				].join(' ')
+			}
+		];
+
+		it('creates distinct source-grounded questions with valid, varied answer choices', () => {
+			const result = generateStudy('quiz', sources, { questionCount: 8, difficulty: 'standard' });
+			const questions = result.payload.questions ?? [];
+			const identification = result.payload.identification ?? [];
+
+			assert.ok(questions.length >= 5);
+			assert.ok(questions.length <= 8);
+			assert.ok(identification.length > 0);
+			assert.ok(
+				identification.every((question) => question.prompt.includes('_____') && question.answer.length > 0)
+			);
+			assert.strictEqual(result.payload.options?.identificationCount, identification.length);
+			assert.strictEqual(new Set(questions.map((question) => question.prompt)).size, questions.length);
+			for (const question of questions) {
+				assert.ok(question.options.length >= 2);
+				assert.ok(question.options.length <= 4);
+				assert.strictEqual(
+					new Set(question.options.map((option) => option.toLowerCase())).size,
+					question.options.length
+				);
+				assert.ok(question.answer >= 0 && question.answer < question.options.length);
+				assert.ok(question.explanation.length > 0);
+				assert.ok(sources.some((source) => source.id === question.sourceNoteId));
+			}
+		});
+
+		it('uses attached notes as quiz sources alongside selected notes', () => {
+			const ownNotes = [
+				'Photosynthesis converts light energy into chemical energy stored in glucose molecules.',
+				'Chlorophyll absorbs light wavelengths that power chemical reactions inside plant cells.',
+				'Stomata regulate gas exchange by allowing carbon dioxide to enter the leaf tissues.'
+			].join(' ');
+			const result = generateStudy('quiz', [sources[0]], {
+				questionCount: 3,
+				difficulty: 'standard',
+				ownNotes
+			});
+
+			assert.ok(
+				result.payload.questions?.some((question) => question.sourceTitle === 'Your attached notes')
+			);
+			assert.ok(result.payload.identification?.length);
+		});
+
+		it('explains when selected notes are too thin to build a quiz', () => {
+			assert.throws(
+				() =>
+					generateStudy('quiz', [
+						{
+							id: 'note-short',
+							title: 'Short note',
+							status: 'verified',
+							content: 'A few words.'
+						}
+					]),
+				/ not contain enough distinct, sentence-level information /
+			);
 		});
 	});
 

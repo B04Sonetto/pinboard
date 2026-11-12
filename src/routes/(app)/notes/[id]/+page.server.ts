@@ -103,14 +103,30 @@ export const actions: Actions = {
 	},
 
 	delete: async ({ locals, params }) => {
-		const { data: note } = await locals.supabase
+		const { data: note, error: noteError } = await locals.supabase
 			.from('notes')
-			.select('file_path')
+			.select('author_id, status, file_path')
 			.eq('id', params.id)
 			.maybeSingle();
 
-		const { error: deleteError } = await locals.supabase.from('notes').delete().eq('id', params.id);
-		if (deleteError) return fail(400, { actionError: 'Could not delete this note.' });
+		if (noteError || !note) return fail(404, { actionError: 'This note could not be found.' });
+
+		const canModerate = locals.profile?.role === 'moderator' || locals.profile?.role === 'admin';
+		if (!canModerate && note.author_id !== locals.user!.id) {
+			return fail(403, { actionError: 'You can only delete notes you created.' });
+		}
+		if (!canModerate && note.status !== 'submitted') {
+			return fail(403, { actionError: 'Only your notes awaiting review can be deleted.' });
+		}
+
+		let deleteQuery = locals.supabase.from('notes').delete().eq('id', params.id);
+		if (!canModerate) {
+			deleteQuery = deleteQuery.eq('author_id', locals.user!.id).eq('status', 'submitted');
+		}
+		const { data: deleted, error: deleteError } = await deleteQuery.select('id').maybeSingle();
+		if (deleteError || !deleted) {
+			return fail(400, { actionError: 'Could not delete this note. Make sure it is still yours and awaiting review.' });
+		}
 
 		if (note?.file_path) {
 			await locals.supabase.storage.from('note-files').remove([note.file_path]);

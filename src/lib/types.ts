@@ -212,7 +212,7 @@ export interface QuizAttempt {
 	generation_id: string;
 	score: number;
 	total: number;
-	answers: Record<string, number>;
+	answers: Record<string, number | string>;
 	created_at: string;
 	generation?: StudyGeneration | null;
 }

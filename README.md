@@ -118,6 +118,14 @@ Open the Supabase Dashboard, go to SQL Editor, and run the contents of:
 
 This creates the tables, enums, indexes, PostgreSQL functions, Row Level Security policies, and storage setup needed by the app.
 
+For an existing database, also run [`supabase/migrations/20261115000000_generation_owner_updates.sql`](supabase/migrations/20261115000000_generation_owner_updates.sql) in the Supabase SQL Editor to enable owner-only editing of generated reviewers.
+
+If practice exams fail with `invalid input value for enum study_kind: "exam"`, run this in the SQL Editor:
+
+```sql
+alter type public.study_kind add value if not exists 'exam';
+```
+
 ### Step 2: Add demo data (optional but recommended)
 
 Run:

@@ -1,19 +1,24 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import type { PageData } from './$types';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import {
 		BookOpenCheck,
 		ClipboardList,
+		Ellipsis,
 		FileQuestion,
 		Hash,
 		History,
+		Pencil,
 		Search,
 		Sparkles,
 		Target,
+		Trash2,
 		Wand2
 	} from '@lucide/svelte';
 	import { formatDate, studyKindLabel } from '$lib/utils';
+	import { dismissable } from '$lib/actions';
 
 	let { data }: { data: PageData } = $props();
 
@@ -107,24 +112,51 @@
 			{#each data.generations as generation (generation.id)}
 				{@const KindIcon = kindIcons[generation.kind]}
 				{@const bestScore = best(generation.attempts)}
-				<a
-					href="/study/{generation.id}"
-					class="card card-hover flex min-w-0 flex-col gap-3 p-4"
-				>
+				<article class="card card-hover relative flex min-w-0 flex-col gap-3 p-4">
 					<div class="flex items-start gap-3">
 						<span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-2 border-ink bg-[#F4F0FF] text-violet">
 							<KindIcon size={18} />
 						</span>
-						<div class="min-w-0 flex-1">
+						<a href="/study/{generation.id}" class="min-w-0 flex-1">
 							<div class="flex flex-wrap items-center gap-1.5">
 								<span class="badge badge-ai !px-1 !py-0 !text-[0.52rem]">✦ AI Generated</span>
 								<span class="font-mono text-[0.58rem] uppercase tracking-[0.06em] text-ink-faint">{studyKindLabel(generation.kind)}</span>
 							</div>
-							<h2 class="mt-1 line-clamp-2 text-[0.92rem] font-bold leading-snug">{generation.title}</h2>
+							<h2 class="mt-1 line-clamp-2 text-[0.92rem] font-bold leading-snug hover:underline">{generation.title}</h2>
 							<p class="mt-1 text-[0.68rem] text-ink-faint">
 								{generation.subject?.code ?? 'General'} · {formatDate(generation.created_at)}
 							</p>
-						</div>
+						</a>
+						<details class="relative shrink-0" use:dismissable>
+							<summary
+								class="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-lg border-2 border-ink/25 bg-paper transition hover:border-ink hover:bg-marigold-soft [&::-webkit-details-marker]:hidden"
+								aria-label="Actions for {generation.title}"
+								title="More options"
+							>
+								<Ellipsis size={19} />
+							</summary>
+							<div class="menu-panel absolute right-0 top-[calc(100%+8px)] z-20 w-48 overflow-hidden">
+								<nav class="flex flex-col p-1.5" aria-label="Study material actions">
+									{#if generation.kind === 'reviewer'}
+										<a href="/study/{generation.id}/edit" class="nav-link"><Pencil size={15} /> Edit reviewer</a>
+									{/if}
+									<form
+										method="POST"
+										action="/study/{generation.id}?/delete"
+										use:enhance={({ cancel }) => {
+											if (!confirm('Delete this study material and its quiz attempts?')) {
+												cancel();
+												return;
+											}
+										}}
+									>
+										<button type="submit" class="nav-link w-full !text-[#B42318]">
+											<Trash2 size={15} /> Delete
+										</button>
+									</form>
+								</nav>
+							</div>
+						</details>
 					</div>
 
 					<div class="mt-auto flex flex-wrap items-center gap-2 border-t border-dashed border-ink/15 pt-2.5">
@@ -137,9 +169,9 @@
 								{bestScore === null ? 'Not attempted' : `Best ${bestScore}%`}
 							</span>
 						{/if}
-						<span class="ml-auto font-mono text-[0.6rem] font-bold text-ink-soft">Open →</span>
+						<a href="/study/{generation.id}" class="ml-auto font-mono text-[0.6rem] font-bold text-ink-soft hover:underline">Open →</a>
 					</div>
-				</a>
+				</article>
 			{/each}
 		</div>
 	{:else}

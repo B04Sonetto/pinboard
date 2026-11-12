@@ -67,7 +67,7 @@
 					autocapitalize="none"
 					spellcheck="false"
 					required
-					placeholder="0324-0574@lspu.edu.ph"
+					placeholder="0000-0000@lspu.edu.ph"
 					bind:value={email}
 				/>
 			</span>
@@ -75,7 +75,7 @@
 				{#if emailReady}
 					<span class="font-semibold text-[#155c3c]">LSPU student email recognized.</span>
 				{:else if email.trim()}
-					Use your student email, like 0324-0574@lspu.edu.ph.
+					Use your student email, like 0000-0000@lspu.edu.ph.
 				{:else}
 					Sign in with your LSPU student email.
 				{/if}

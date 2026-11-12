@@ -64,7 +64,7 @@
 </script>
 
 <article
-	class="sticky group {flat ? 'sticky-flat' : ''}"
+	class="note-sticky group {flat ? 'sticky-flat' : ''}"
 	style="--note-color:{color};--note-rot:{noteTilt(note.id)}deg;--pin-color:{pinColor(note.id)}"
 >
 	<!-- The whole note is one link; the bookmark button sits above it. -->

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Bookmark } from '@lucide/svelte';
 	import { untrack } from 'svelte';
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { toast } from '$lib/stores/toast.svelte';
 
 	let {
@@ -37,6 +37,11 @@
 			const data = (await response.json()) as { saved: boolean };
 			saved = data.saved;
 			toast.success(data.saved ? 'Topic bookmarked' : 'Topic removed from bookmarks');
+			try {
+				await invalidateAll();
+			} catch {
+				toast.error('Bookmark saved, but the page could not refresh. Reload to see the latest list.');
+			}
 		} catch {
 			saved = !next;
 			toast.error('Could not update this topic bookmark.');

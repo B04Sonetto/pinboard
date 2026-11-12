@@ -21,7 +21,7 @@ export const actions: Actions = {
 		const next = safeNext(String(form.get('next') ?? url.searchParams.get('redirect') ?? ''));
 
 		if (!isLspuStudentEmail(email)) {
-			return fail(400, { error: 'Use your LSPU student email, for example 0324-0574@lspu.edu.ph.', email, next });
+			return fail(400, { error: 'Use your LSPU student email, for example 0000-0000@lspu.edu.ph.', email, next });
 		}
 		if (!password) {
 			return fail(400, { error: 'Enter your password.', email, next });

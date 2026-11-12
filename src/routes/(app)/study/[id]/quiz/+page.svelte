@@ -6,30 +6,43 @@
 	let { data }: { data: PageData } = $props();
 
 	const questions = $derived(data.quiz.payload.questions ?? []);
+	const identification = $derived(data.quiz.payload.identification ?? []);
 
 	type Result = {
 		id: string;
-		chosen: number;
-		answer: number;
+		type: 'objective' | 'identification';
+		chosen: number | string;
+		answer: number | string;
 		correct: boolean;
 		explanation: string;
 		options: string[];
 	};
 
-	let answers = $state<Record<string, number>>({});
+	let answers = $state<Record<string, number | string>>({});
 	let submitting = $state(false);
 	let errorMessage = $state<string | null>(null);
 	let results = $state<Result[] | null>(null);
 	let score = $state(0);
 	let total = $state(0);
 
-	const answeredCount = $derived(questions.filter((question) => answers[question.id] !== undefined).length);
-	const allAnswered = $derived(answeredCount === questions.length);
+	const totalQuestionCount = $derived(questions.length + identification.length);
+	const answeredCount = $derived(
+		[...questions, ...identification].filter((question) => {
+			const answer = answers[question.id];
+			return typeof answer === 'number' || (typeof answer === 'string' && answer.trim().length > 0);
+		}).length
+	);
+	const allAnswered = $derived(totalQuestionCount > 0 && answeredCount === totalQuestionCount);
 	const percent = $derived(total ? Math.round((score / total) * 100) : 0);
 
 	function choose(questionId: string, optionIndex: number) {
 		if (results) return;
 		answers[questionId] = optionIndex;
+	}
+
+	function answerIdentification(questionId: string, value: string) {
+		if (results) return;
+		answers[questionId] = value;
 	}
 
 	async function submit() {
@@ -87,7 +100,7 @@
 	<header class="flex flex-col gap-3">
 		<div class="flex flex-wrap items-center gap-2">
 			<span class="badge badge-ai"><span aria-hidden="true">✦</span> AI Generated</span>
-			<span class="badge badge-neutral">{questions.length} questions</span>
+			<span class="badge badge-neutral">{totalQuestionCount} questions</span>
 			{#if data.quiz.subject}<a href="/courses/{data.quiz.subject.id}" class="chip !min-h-6 !text-[0.66rem] hover:bg-marigold">{data.quiz.subject.code}</a>{/if}
 			{#if data.quiz.topic}<span class="chip chip-soft !min-h-6 !text-[0.66rem]">{data.quiz.topic.name}</span>{/if}
 		</div>
@@ -148,9 +161,9 @@
 	{:else}
 		<div class="sticky top-16 z-10 flex flex-wrap items-center gap-3 rounded-xl border-2 border-ink bg-paper-card px-4 py-2.5 shadow-[3px_3px_0_#211D31]">
 			<Target size={16} />
-			<span class="text-[0.78rem] font-bold">{answeredCount} / {questions.length} answered</span>
+			<span class="text-[0.78rem] font-bold">{answeredCount} / {totalQuestionCount} answered</span>
 			<div class="h-2 min-w-24 flex-1 overflow-hidden rounded-full border border-ink bg-paper">
-				<div class="h-full bg-marigold transition-all" style="width: {questions.length ? (answeredCount / questions.length) * 100 : 0}%"></div>
+				<div class="h-full bg-marigold transition-all" style="width: {totalQuestionCount ? (answeredCount / totalQuestionCount) * 100 : 0}%"></div>
 			</div>
 			<button type="button" class="btn btn-primary btn-sm" disabled={!allAnswered || submitting} onclick={submit}>
 				{#if submitting}<LoaderCircle size={14} class="animate-spin" /> Checking…{:else}Check answers{/if}
@@ -197,9 +210,9 @@
 								{@const isCorrectOption = result?.answer === optionIndex}
 								<button
 									type="button"
-									class="flex items-start gap-2 rounded-lg border-2 border-ink/30 bg-paper px-3 py-2 text-left text-[0.8rem] font-medium transition hover:border-ink"
-									class:border-ink={isChosen && !result}
-									class:bg-marigold-soft={isChosen && !result}
+									class="flex items-start gap-2 rounded-lg border-2 border-ink/30 bg-paper px-3 py-2 text-left text-[0.8rem] font-medium transition hover:border-ink disabled:cursor-default"
+									class:!border-ink={isChosen && !result}
+									class:!bg-marigold-soft={isChosen && !result}
 									class:!border-[#1C7A50]={result && isCorrectOption}
 									class:!bg-[#EFFBF3]={result && isCorrectOption}
 									class:!border-[#B42318]={result && isChosen && !isCorrectOption}
@@ -210,9 +223,11 @@
 									<span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border border-ink/50 font-mono text-[0.58rem] font-bold">
 										{String.fromCharCode(65 + optionIndex)}
 									</span>
-									<span class="min-w-0">
+									<span class="min-w-0 flex-1">
 										{option}
-										{#if result && isCorrectOption}
+										{#if !result && isChosen}
+											<span class="ml-1.5 rounded border border-ink/30 bg-marigold px-1.5 py-0.5 font-mono text-[0.55rem] font-bold uppercase">Selected</span>
+										{:else if result && isCorrectOption}
 											<span class="ml-1.5 inline-flex items-center gap-0.5 text-[0.62rem] font-bold text-[#1C7A50]"><CheckCircle2 size={11} /> correct</span>
 										{:else if result && isChosen}
 											<span class="ml-1.5 inline-flex items-center gap-0.5 text-[0.62rem] font-bold text-[#B42318]"><XCircle size={11} /> your choice</span>
@@ -240,10 +255,83 @@
 		{/each}
 	</ol>
 
+	{#if identification.length}
+		<section aria-labelledby="identification-heading" class="flex flex-col gap-3">
+			<div class="flex flex-wrap items-end justify-between gap-2">
+				<div>
+					<p class="kicker !text-[0.6rem]">Recall without choices</p>
+					<h2 id="identification-heading" class="font-display text-xl font-extrabold">Identification</h2>
+				</div>
+				<span class="badge badge-neutral">{identification.length} items</span>
+			</div>
+			<ol class="flex flex-col gap-4">
+				{#each identification as question, index (question.id)}
+					{@const result = resultFor.get(question.id)}
+					{@const chosen = answers[question.id]}
+					<li class="card p-4 sm:p-5" class:border-[#1C7A50]={result?.correct} class:border-[#B42318]={result && !result.correct}>
+						<div class="flex items-start gap-3">
+							<span
+								class="flex h-7 w-7 shrink-0 items-center justify-center rounded border-2 border-ink font-mono text-[0.68rem] font-bold"
+								class:bg-leaf={result?.correct}
+								class:bg-coral={result && !result.correct}
+								class:bg-marigold={!result}
+							>
+								{#if result}{#if result.correct}✓{:else}×{/if}{:else}{questions.length + index + 1}{/if}
+							</span>
+							<div class="min-w-0 flex-1">
+								<p class="text-[0.92rem] font-semibold leading-relaxed">{question.prompt}</p>
+								{#if question.sourceNoteId && question.sourceTitle}
+									<a href="/notes/{question.sourceNoteId}" class="mt-1 inline-block text-[0.68rem] font-bold text-violet hover:underline">
+										Source note: {question.sourceTitle} →
+									</a>
+								{/if}
+								<label class="mt-3 block">
+									<span class="sr-only">Your answer for identification item {index + 1}</span>
+									<input
+										class="input"
+										class:!border-ink={!results && typeof chosen === 'string' && chosen.trim()}
+										class:!bg-marigold-soft={!results && typeof chosen === 'string' && chosen.trim()}
+										class:!border-[#1C7A50]={result?.correct}
+										class:!bg-[#EFFBF3]={result?.correct}
+										class:!border-[#B42318]={result && !result.correct}
+										class:!bg-[#FFF1EF]={result && !result.correct}
+										type="text"
+										autocomplete="off"
+										placeholder="Type the missing term…"
+										value={typeof chosen === 'string' ? chosen : ''}
+										disabled={Boolean(results)}
+										oninput={(event) => answerIdentification(question.id, event.currentTarget.value)}
+									/>
+								</label>
+								{#if result}
+									<div class="mt-3 rounded-lg border-2 border-dashed border-ink/25 bg-paper-deep/50 p-3">
+										<p class="flex flex-wrap items-center gap-1 text-[0.76rem] font-bold">
+											{#if result.correct}
+												<CheckCircle2 size={14} class="text-[#1C7A50]" />
+												<span class="text-[#1C7A50]">Correct</span>
+											{:else}
+												<XCircle size={14} class="text-[#B42318]" />
+												<span class="text-[#B42318]">Correct answer:</span>
+												<span class="rounded bg-[#EFFBF3] px-1 text-[#155c3c]">{result.answer}</span>
+											{/if}
+										</p>
+										<p class="mt-1 text-[0.76rem] leading-relaxed text-ink-soft">
+											<strong class="text-ink">Why:</strong> {result.explanation}
+										</p>
+									</div>
+								{/if}
+							</div>
+						</div>
+					</li>
+				{/each}
+			</ol>
+		</section>
+	{/if}
+
 	{#if !results}
 		<div class="flex flex-col items-center gap-2">
 			{#if !allAnswered}
-				<p class="text-[0.72rem] text-ink-soft">Answer all {questions.length} questions to check your score.</p>
+				<p class="text-[0.72rem] text-ink-soft">Answer all {totalQuestionCount} questions to check your score.</p>
 			{/if}
 			<button type="button" class="btn btn-primary btn-lg" disabled={!allAnswered || submitting} onclick={submit}>
 				{#if submitting}<LoaderCircle size={17} class="animate-spin" /> Checking your answers…{:else}Check answers{/if}

@@ -68,7 +68,7 @@
 
 		<p class="relative z-10 mt-8 max-w-md text-[0.65rem] leading-relaxed text-ink-soft">
 			Built for Laguna State Polytechnic University students. Use your LSPU student email,
-			for example 0324-0574@lspu.edu.ph. Pinboard is a student community platform, not an official university service.
+			for example 0000-0000@lspu.edu.ph. Pinboard is a student community platform, not an official university service.
 		</p>
 	</aside>
 

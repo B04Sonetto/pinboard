@@ -4,7 +4,7 @@
 	let { content, class: className = '' }: { content: string | null | undefined; class?: string } = $props();
 </script>
 
-<div class="prose-pinboard {className}">
+<div class="prose-pinboard min-w-0 max-w-full {className}">
 	{@html renderMarkdown(content)}
 </div>
 

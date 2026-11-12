@@ -52,7 +52,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		sources,
 		attempts,
 		bestPercent: Math.round(best * 100),
-		questionCount: payload.questions?.length ?? 0
+		questionCount: payload.questions?.length ?? 0,
+		identificationCount: payload.identification?.length ?? 0
 	};
 };
 

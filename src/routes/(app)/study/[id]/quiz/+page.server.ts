@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import type { QuizQuestion, StudyGeneration } from '$lib/types';
+import type { IdentificationQuestion, QuizQuestion, StudyGeneration } from '$lib/types';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -19,13 +19,20 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	const generation = data as unknown as StudyGeneration;
 	const questions = (generation.payload?.questions ?? []) as QuizQuestion[];
-	if (!questions.length) throw error(404, 'This quiz has no questions. Generate a new one.');
+	const identification = (generation.payload?.identification ?? []) as IdentificationQuestion[];
+	if (!questions.length && !identification.length) throw error(404, 'This quiz has no questions. Generate a new one.');
 
 	// Keep the answer key on the server; the client receives only prompts and options.
 	const clientQuestions = questions.map((question) => ({
 		id: question.id,
 		prompt: question.prompt,
 		options: question.options,
+		sourceNoteId: question.sourceNoteId,
+		sourceTitle: question.sourceTitle
+	}));
+	const clientIdentification = identification.map((question) => ({
+		id: question.id,
+		prompt: question.prompt,
 		sourceNoteId: question.sourceNoteId,
 		sourceTitle: question.sourceTitle
 	}));
@@ -39,7 +46,14 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		.limit(5);
 
 	return {
-		quiz: { ...generation, payload: { ...generation.payload, questions: clientQuestions } },
+		quiz: {
+			...generation,
+			payload: {
+				...generation.payload,
+				questions: clientQuestions,
+				identification: clientIdentification
+			}
+		},
 		previousAttempts: (attempts ?? []) as { id: string; score: number; total: number; created_at: string }[]
 	};
 };

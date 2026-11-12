@@ -180,9 +180,38 @@ export const actions: Actions = {
 			.select('id')
 			.single();
 
-		if (insertError || !inserted) {
+		if (insertError) {
+			console.error('Could not save generated study material:', {
+				code: insertError.code,
+				message: insertError.message,
+				details: insertError.details,
+				hint: insertError.hint
+			});
+			const schemaOutdated =
+				insertError.code === '42703' ||
+				insertError.code === '42P01' ||
+				insertError.code === 'PGRST204' ||
+				insertError.code === 'PGRST205';
+			const invalidReference = insertError.code === '23503';
+			const missingExamKind =
+				insertError.code === '22P02' &&
+				insertError.message.includes('study_kind') &&
+				insertError.message.includes('exam');
 			return fail(400, {
-				error: 'Could not save the generated material. Check that the database schema is up to date.',
+				error: missingExamKind
+					? 'Practice exams are not enabled in your Supabase database yet. In Supabase SQL Editor, run: alter type public.study_kind add value if not exists \'exam\'; Then try again.'
+					: schemaOutdated
+					? 'Your Supabase database schema is out of date. Run the latest supabase/setup.sql in the Supabase SQL Editor, then try again.'
+					: invalidReference
+						? 'A selected department, subject, topic, or source note no longer exists. Refresh the page, choose the source notes again, and retry.'
+						: `Could not save the generated material${insertError.code ? ` (${insertError.code})` : ''}: ${insertError.message}`,
+				...values
+			});
+		}
+		if (!inserted) {
+			console.error('Could not save generated study material: insert returned no row.');
+			return fail(400, {
+				error: 'The database did not confirm that the generated material was saved. Please try again.',
 				...values
 			});
 		}

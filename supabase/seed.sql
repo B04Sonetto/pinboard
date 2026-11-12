@@ -5,11 +5,14 @@
 
 -- ── Departments ─────────────────────────────────────────────────────────────
 insert into public.departments (id, name, short_name, color, description, sort_order) values
-  ('cs',  'Computer Studies',        'CS',  '#FFE680', 'Software, networks, data and information systems.', 1),
-  ('bus', 'Business & Accountancy',  'BA',  '#BFE0FF', 'Accounting, management and enterprise practice.', 2),
-  ('edu', 'Teacher Education',       'TE',  '#FFC9DC', 'Teaching foundations, pedagogy and classroom practice.', 3),
-  ('eng', 'Engineering',             'ENG', '#BDEBCB', 'Applied physics, structures and engineering design.', 4),
-  ('as',  'Arts & Sciences',         'AS',  '#DCD0FF', 'Social sciences, communication and the liberal arts.', 5)
+  ('as',    'College of Arts and Sciences',                         'CAS',   '#DCD0FF', 'Biology and psychology programs.', 1),
+  ('bus',   'College of Business Administration and Accountancy',   'CBAA',  '#BFE0FF', 'Accountancy, business administration, and office administration.', 2),
+  ('cs',    'College of Computer Studies',                           'CCS',   '#FFE680', 'Computer science and information technology programs.', 3),
+  ('ccje',  'College of Criminal Justice Education',                 'CCJE',  '#FFC9A8', 'Criminology and criminal justice education.', 4),
+  ('eng',   'College of Engineering',                                'COE',   '#BDEBCB', 'Computer, electrical, and electronics engineering.', 5),
+  ('cit',   'College of Industrial Technology',                       'CIT',   '#AEE4DF', 'Industrial technology and its applied specializations.', 6),
+  ('cihtm', 'College of Hospitality Management and Tourism',          'CIHTM', '#FFD3A8', 'Hospitality and tourism management programs.', 7),
+  ('edu',   'College of Teacher Education',                           'CTE',   '#FFC9DC', 'Elementary, secondary, physical, and technical-vocational teacher education.', 8)
 on conflict (id) do update set
   name = excluded.name,
   short_name = excluded.short_name,
@@ -19,17 +22,32 @@ on conflict (id) do update set
 
 -- ── Programs ────────────────────────────────────────────────────────────────
 insert into public.programs (id, department_id, name, code, description) values
-  ('aaaaaaaa-0000-4000-8000-000000000001', 'cs',  'BS Information Technology', 'BSIT', 'Systems, networks and web development.'),
-  ('aaaaaaaa-0000-4000-8000-000000000002', 'cs',  'BS Computer Science', 'BSCS', 'Algorithms, theory and software engineering.'),
-  ('aaaaaaaa-0000-4000-8000-000000000003', 'bus', 'BS Accountancy', 'BSA', 'Financial reporting, audit and cost accounting.'),
-  ('aaaaaaaa-0000-4000-8000-000000000004', 'bus', 'BS Business Administration', 'BSBA', 'Management, marketing and operations.'),
-  ('aaaaaaaa-0000-4000-8000-000000000005', 'edu', 'Bachelor of Elementary Education', 'BEEd', 'Generalist teaching for elementary grades.'),
-  ('aaaaaaaa-0000-4000-8000-000000000006', 'edu', 'Bachelor of Secondary Education', 'BSEd', 'Specialized teaching for secondary grades.'),
-  ('aaaaaaaa-0000-4000-8000-000000000007', 'eng', 'BS Civil Engineering', 'BSCE', 'Structures, materials and infrastructure.'),
-  ('aaaaaaaa-0000-4000-8000-000000000008', 'eng', 'BS Electrical Engineering', 'BSEE', 'Circuits, power systems and electronics.'),
-  ('aaaaaaaa-0000-4000-8000-000000000009', 'as',  'BA Communication', 'BACOMM', 'Media, journalism and strategic communication.'),
-  ('aaaaaaaa-0000-4000-8000-00000000000a', 'as',  'BS Psychology', 'BSPSY', 'Behavior, cognition and research methods.')
-on conflict (id) do nothing;
+  ('aaaaaaaa-0000-4000-8000-000000000001', 'cs',  'Bachelor of Science in Information Technology', 'BSInfoTech', 'Specializations: Animation and Motion Graphics; Systems Management/Development; Web and Mobile App Development.'),
+  ('aaaaaaaa-0000-4000-8000-000000000002', 'cs',  'Bachelor of Science in Computer Science', 'BSCS', 'Graphics and Visual Computing.'),
+  ('aaaaaaaa-0000-4000-8000-000000000003', 'bus', 'Bachelor of Science in Accountancy', 'BSA', 'Accountancy and professional accounting practice.'),
+  ('aaaaaaaa-0000-4000-8000-000000000004', 'bus', 'Bachelor of Science in Business Administration', 'BSBA', 'Majors: Financial Management and Marketing Management.'),
+  ('aaaaaaaa-0000-4000-8000-000000000005', 'edu', 'Bachelor of Elementary Education', 'BEEd', 'Elementary teaching and learning.'),
+  ('aaaaaaaa-0000-4000-8000-000000000006', 'edu', 'Bachelor of Secondary Education', 'BSEd', 'Secondary teaching and learning.'),
+  ('aaaaaaaa-0000-4000-8000-000000000007', 'eng', 'Bachelor of Science in Computer Engineering', 'BSCpE', 'Computer hardware, software, and systems engineering.'),
+  ('aaaaaaaa-0000-4000-8000-000000000008', 'eng', 'Bachelor of Science in Electrical Engineering', 'BSEE', 'Electrical systems, circuits, and power engineering.'),
+  ('aaaaaaaa-0000-4000-8000-000000000009', 'as',  'Bachelor of Science in Biology', 'BSBio', 'Biological sciences and laboratory study.'),
+  ('aaaaaaaa-0000-4000-8000-00000000000a', 'as',  'Bachelor of Science in Psychology', 'BSPsych', 'Behavior, cognition, and psychological research.'),
+  ('aaaaaaaa-0000-4000-8000-00000000000b', 'bus', 'Bachelor of Science in Office Administration', 'BSOA', 'Office systems, administration, and professional communication.'),
+  ('aaaaaaaa-0000-4000-8000-00000000000c', 'cs',  'Master in Information Technology', 'MIT', 'Graduate study in information technology.'),
+  ('aaaaaaaa-0000-4000-8000-00000000000d', 'ccje', 'Bachelor of Science in Criminology', 'BSCrim', 'Criminology and criminal justice.'),
+  ('aaaaaaaa-0000-4000-8000-00000000000e', 'eng', 'Bachelor of Science in Electronics Engineering', 'BSECE', 'Electronic systems and communications engineering.'),
+  ('aaaaaaaa-0000-4000-8000-00000000000f', 'cihtm', 'Bachelor of Science in Hospitality Management', 'BSHM', 'Hospitality services and management.'),
+  ('aaaaaaaa-0000-4000-8000-000000000010', 'cihtm', 'Bachelor of Science in Tourism Management', 'BSTM', 'Tourism operations and destination management.'),
+  ('aaaaaaaa-0000-4000-8000-000000000011', 'edu', 'Bachelor of Physical Education', 'BPEd', 'Physical education, movement, and wellness.'),
+  ('aaaaaaaa-0000-4000-8000-000000000012', 'edu', 'Bachelor of Technology and Livelihood Education', 'BTLEd', 'Technology and livelihood education.'),
+  ('aaaaaaaa-0000-4000-8000-000000000013', 'edu', 'Bachelor of Technical-Vocational Teacher Education', 'BTVTEd', 'Technical-vocational teaching and training.'),
+  ('aaaaaaaa-0000-4000-8000-000000000014', 'edu', 'Certificate in Teaching Program', 'CTP', 'Professional teaching preparation.'),
+  ('aaaaaaaa-0000-4000-8000-000000000015', 'cit', 'Bachelor of Science in Industrial Technology', 'BSIT', 'Majors: Automotive Technology (AT), Architectural Drafting Technology (AD), Electrical Technology (ELT), Electronics Technology (ELX), Food Preparation and Services Management (FBPSM), and Heating, Ventilation, Air Conditioning, and Refrigeration (HVACR).')
+on conflict (id) do update set
+  department_id = excluded.department_id,
+  name = excluded.name,
+  code = excluded.code,
+  description = excluded.description;
 
 -- ── Subjects ────────────────────────────────────────────────────────────────
 insert into public.subjects (id, program_id, department_id, code, name, year_level, semester, description, is_community) values
@@ -83,11 +101,11 @@ on conflict (id) do nothing;
 
 -- ── People (demo community) ────────────────────────────────────────────────
 insert into public.profiles (id, full_name, role, department_id, program_id, year_level, semester, bio, avatar_color) values
-  ('11111111-1111-4111-8111-111111111101', 'Mika Reyes', 'student', 'cs', 'aaaaaaaa-0000-4000-8000-000000000001', 3, 1, 'BSIT student. Databases, backend and too much coffee.', '#FFE680'),
+  ('11111111-1111-4111-8111-111111111101', 'Mika Reyes', 'student', 'cs', 'aaaaaaaa-0000-4000-8000-000000000001', 3, 1, 'BSInfoTech student. Databases, backend and too much coffee.', '#FFE680'),
   ('11111111-1111-4111-8111-111111111102', 'Dan Cruz', 'student', 'cs', 'aaaaaaaa-0000-4000-8000-000000000001', 2, 1, 'Networking notes and subnetting drills.', '#BFE0FF'),
   ('11111111-1111-4111-8111-111111111103', 'Rica Lopez', 'student', 'bus', 'aaaaaaaa-0000-4000-8000-000000000003', 2, 2, 'BSA. Accounting flowcharts are my love language.', '#BDEBCB'),
   ('11111111-1111-4111-8111-111111111104', 'Joy Perez', 'student', 'edu', 'aaaaaaaa-0000-4000-8000-000000000005', 3, 1, 'Future elementary teacher. Lesson plans and read-alouds.', '#FFC9DC'),
-  ('11111111-1111-4111-8111-111111111105', 'Marco Torres', 'student', 'eng', 'aaaaaaaa-0000-4000-8000-000000000007', 2, 2, 'BSCE. Mechanics notes with a lot of arrows.', '#BDEBCB'),
+  ('11111111-1111-4111-8111-111111111105', 'Marco Torres', 'student', 'eng', 'aaaaaaaa-0000-4000-8000-000000000007', 2, 2, 'BSCpE. Mechanics notes with a lot of arrows.', '#BDEBCB'),
   ('11111111-1111-4111-8111-111111111106', 'Lea Santos', 'student', 'as', 'aaaaaaaa-0000-4000-8000-00000000000a', 1, 1, 'Psychology major interested in how people learn.', '#DCD0FF'),
   ('11111111-1111-4111-8111-111111111107', 'Ken Aquino', 'student', 'cs', 'aaaaaaaa-0000-4000-8000-000000000001', 4, 1, 'Capstone survivor. Happy to share the checklist.', '#FFE680'),
   ('11111111-1111-4111-8111-111111111108', 'Tess Villanueva', 'student', 'bus', 'aaaaaaaa-0000-4000-8000-000000000003', 2, 2, 'Cost accounting drills and reviewer swaps.', '#BFE0FF'),
@@ -1346,7 +1364,7 @@ where n.status = 'verified'
 -- ── Suggestions ─────────────────────────────────────────────────────────────
 insert into public.suggestions (id, user_id, kind, title, details, subject_id, status, admin_note, created_at, updated_at) values
   ('eeeeeeee-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111102', 'lesson', 'Add a lesson on VLANs', 'Networking 1 covers subnetting but not VLAN configuration. A short lesson with a switch configuration example would help.', 'bbbbbbbb-0000-4000-8000-000000000002', 'open', null, now() - interval '3 days', now() - interval '3 days'),
-  ('eeeeeeee-0000-4000-8000-000000000002', '11111111-1111-4111-8111-111111111104', 'subject', 'Add Classroom Management as a subject', 'Student teachers keep asking about classroom management, but it is not listed under Teacher Education. Could it be added under Year 3, first semester?', 'bbbbbbbb-0000-4000-8000-000000000009', 'accepted', 'Added to the community course list for review.', now() - interval '9 days', now() - interval '5 days'),
+  ('eeeeeeee-0000-4000-8000-000000000002', '11111111-1111-4111-8111-111111111104', 'subject', 'Add Classroom Management as a subject', 'Student teachers keep asking about classroom management, but it is not listed under the College of Teacher Education. Could it be added under Year 3, first semester?', 'bbbbbbbb-0000-4000-8000-000000000009', 'accepted', 'Added to the community course list for review.', now() - interval '9 days', now() - interval '5 days'),
   ('eeeeeeee-0000-4000-8000-000000000003', '11111111-1111-4111-8111-111111111103', 'correction', 'Accounting cycle step 10 wording', 'The last step is optional reversing entries, not a required part of the cycle. Suggest clarifying it.', 'bbbbbbbb-0000-4000-8000-000000000006', 'under_review', null, now() - interval '1 day', now() - interval '20 hours')
 on conflict (id) do nothing;
 

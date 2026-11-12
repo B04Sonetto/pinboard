@@ -256,18 +256,29 @@
 										{@const isCorrect = result?.answer === optionIndex}
 										<button
 											type="button"
-											class="flex items-start gap-2 rounded-lg border-2 border-ink/30 bg-paper px-3 py-2 text-left text-[0.8rem] font-medium transition hover:border-ink"
-											class:border-ink={isChosen && !result}
-											class:bg-marigold-soft={isChosen && !result}
+											class="flex items-start gap-2 rounded-lg border-2 border-ink/30 bg-paper px-3 py-2 text-left text-[0.8rem] font-medium transition hover:border-ink disabled:cursor-default"
+											class:!border-ink={!result && isChosen}
+											class:!bg-marigold-soft={!result && isChosen}
 											class:!border-[#1C7A50]={result && isCorrect}
 											class:!bg-[#EFFBF3]={result && isCorrect}
 											class:!border-[#B42318]={result && isChosen && !isCorrect}
 											class:!bg-[#FFF1EF]={result && isChosen && !isCorrect}
+											aria-pressed={isChosen}
+											aria-label="{String.fromCharCode(65 + optionIndex)}. {option}{isChosen ? ', selected' : ''}{result && isCorrect ? ', correct answer' : ''}"
 											disabled={Boolean(results)}
 											onclick={() => choose(question.id, optionIndex)}
 										>
 											<span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border border-ink/50 font-mono text-[0.58rem] font-bold">{String.fromCharCode(65 + optionIndex)}</span>
-											<span class="min-w-0">{option}</span>
+											<span class="min-w-0 flex-1">
+												{option}
+												{#if !results && isChosen}
+													<span class="ml-1.5 rounded border border-ink/30 bg-marigold px-1.5 py-0.5 font-mono text-[0.55rem] font-bold uppercase">Selected</span>
+												{:else if result && isCorrect}
+													<span class="ml-1.5 inline-flex items-center gap-0.5 font-mono text-[0.58rem] font-bold uppercase text-[#1C7A50]"><CheckCircle2 size={12} /> Correct</span>
+												{:else if result && isChosen}
+													<span class="ml-1.5 inline-flex items-center gap-0.5 font-mono text-[0.58rem] font-bold uppercase text-[#B42318]"><XCircle size={12} /> Your answer</span>
+												{/if}
+											</span>
 										</button>
 									{/each}
 								</div>
@@ -302,6 +313,12 @@
 								{/if}
 								<input
 									class="input mt-2 !min-h-10 !text-sm"
+									class:!border-ink={!results && (answersIdentification[question.id] ?? '').trim()}
+									class:!bg-marigold-soft={!results && (answersIdentification[question.id] ?? '').trim()}
+									class:!border-[#1C7A50]={result?.correct}
+									class:!bg-[#EFFBF3]={result?.correct}
+									class:!border-[#B42318]={result && !result.correct}
+									class:!bg-[#FFF1EF]={result && !result.correct}
 									type="text"
 									placeholder="Type the missing term"
 									value={answersIdentification[question.id] ?? ''}
@@ -310,7 +327,7 @@
 								/>
 								{#if result}
 									<div class="mt-2 rounded-lg border-2 border-dashed border-ink/25 bg-paper-deep/50 p-3 text-[0.76rem] leading-relaxed text-ink-soft">
-										<strong class="text-ink">{result.correct ? 'Correct.' : `Answer: ${result.answer}.`}</strong> {result.explanation}
+										<strong class={result.correct ? 'text-[#1C7A50]' : 'text-[#B42318]'}>{result.correct ? 'Correct.' : `Correct answer: ${result.answer}.`}</strong> {result.explanation}
 									</div>
 								{/if}
 							</div>
@@ -344,6 +361,8 @@
 								{/if}
 								<textarea
 									class="textarea mt-2 min-h-[9rem]"
+									class:!border-ink={!submitted && (answersEssay[essay.id] ?? '').trim()}
+									class:!bg-marigold-soft={!submitted && (answersEssay[essay.id] ?? '').trim()}
 									rows="5"
 									placeholder="Write your answer here…"
 									value={answersEssay[essay.id] ?? ''}

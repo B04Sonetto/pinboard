@@ -136,6 +136,21 @@ function combinedText(sources: StudySource[], options: StudyOptions): string {
 	].join('\n\n');
 }
 
+function sourcesWithOwnNotes(sources: StudySource[], options: StudyOptions): StudySource[] {
+	const ownNotes = options.ownNotes?.trim();
+	return ownNotes
+		? [
+				...sources,
+				{
+					id: 'own-notes',
+					title: 'Your attached notes',
+					status: 'submitted',
+					content: ownNotes
+				}
+			]
+		: sources;
+}
+
 function buildSummary(sources: StudySource[], options: StudyOptions): StudyResult {
 	const focus = focusList(options);
 	const contentParts: string[] = [
@@ -295,8 +310,9 @@ function buildTrueFalse(
 	if (limit <= 0) return [];
 	const tier = level(options);
 	const items: QuizQuestion[] = [];
+	const poolTerms = new Set(pool.flatMap((term) => tokenize(term)));
 	const candidates = sources.flatMap((source) =>
-		splitSentences(source.content)
+		splitSentences([source.summary, source.content].filter(Boolean).join('\n'))
 			.map((sentence, index) => ({ source, sentence, index }))
 			.filter(
 				(candidate) =>
@@ -307,14 +323,14 @@ function buildTrueFalse(
 
 	for (const candidate of ordered) {
 		if (items.length >= limit) break;
-		const tokens = tokenize(candidate.sentence).filter((token) => pool.includes(token) && token.length >= 5);
+		const tokens = tokenize(candidate.sentence).filter((token) => poolTerms.has(token) && token.length >= 4);
 		if (tokens.length === 0) continue;
 
 		const answerTerm = tokens[0];
 		const pattern = new RegExp(`\\b${escapeRegex(answerTerm)}\\b`, 'i');
 		if (!pattern.test(candidate.sentence)) continue;
 
-		const statementKey = candidate.sentence.slice(0, 50);
+		const statementKey = candidate.sentence.toLowerCase().replace(/\s+/g, ' ').slice(0, 100);
 		if (used.has(statementKey)) continue;
 
 		const replacements = pool.filter(
@@ -389,97 +405,125 @@ function buildFlashcards(questions: QuizQuestion[], sources: StudySource[]): Fla
 	return cards;
 }
 
-function buildQuiz(sources: StudySource[], options: StudyOptions): StudyResult {
-	const requested = Math.min(15, Math.max(3, options.questionCount ?? 8));
+function buildQuiz(
+	sources: StudySource[],
+	options: StudyOptions,
+	includeIdentification = true
+): StudyResult {
+	const requested = Math.min(15, Math.max(3, Math.round(options.questionCount ?? 8)));
 	const focus = focusList(options);
 	const tier = level(options);
 	const difficulty = options.difficulty ?? 'standard';
 	const tfTarget = requested >= 6 ? Math.max(1, Math.round(requested * 0.25)) : 0;
 	const mcTarget = requested - tfTarget;
-	const pool = extractKeywords(combinedText(sources, options), 40).map((item) => item.term);
+	const quizSources = sourcesWithOwnNotes(sources, options);
+	const corpus = quizSources
+		.map((source) => [source.summary, source.content].filter(Boolean).join('\n'))
+		.join('\n\n');
+	const rankedPool = extractKeywords(corpus, 80).flatMap((item) => tokenize(item.term));
+	const pool = [...new Set(rankedPool)];
 	const questions: QuizQuestion[] = [];
-	const used = new Set<string>();
+	const usedAnswers = new Set<string>();
+	const usedStatements = new Set<string>();
+	const poolOrder = new Map(pool.map((term, index) => [term, index]));
+	const poolSet = new Set(pool);
+	const communitySourceCount = sources.filter((source) => source.id !== 'own-notes').length;
+	const includesOwnNotes = quizSources.some((source) => source.id === 'own-notes');
+	const sourceDescription = communitySourceCount
+		? `${communitySourceCount} selected community ${communitySourceCount === 1 ? 'note' : 'notes'}${includesOwnNotes ? ' and your attached notes' : ''}`
+		: 'your attached notes';
+	const rankedSources = quizSources.map((source) => {
+		const sentences = splitSentences([source.summary, source.content].filter(Boolean).join('\n'));
+		return sentences
+			.map((sentence, index) => ({
+				sentence,
+				index,
+				focusHits: focus.filter((term) => sentence.toLowerCase().includes(term.toLowerCase())).length,
+				score: sentenceScore(sentence, poolSet, index)
+			}))
+			.filter((candidate) => candidate.score > 0 && candidate.sentence.length >= tier.minSentence)
+			.sort((a, b) => b.focusHits - a.focusHits || b.score - a.score || a.index - b.index)
+			.map((candidate) => ({ ...candidate, source }));
+	});
 
-	// Multiple-choice items are made by masking a key term in a source sentence.
-	for (const source of sources) {
-		const sentences = splitSentences(source.content);
-		const candidates = sentences
-			.map((sentence, index) => {
-				const tokens = tokenize(sentence);
-				const keywords = tokens.filter((token) => pool.includes(token) && token.length >= 5);
-				const focusHits = focus.filter((term) => sentence.toLowerCase().includes(term.toLowerCase())).length;
-				return { sentence, index, keywords, focusHits };
-			})
-			.filter((candidate) => candidate.keywords.length > 0 && candidate.sentence.length >= tier.minSentence)
-			.sort((a, b) => b.focusHits - a.focusHits || a.index - b.index);
+	const candidates = rankedSources.flat().sort(
+		(a, b) => b.focusHits - a.focusHits || b.score - a.score || a.index - b.index
+	);
 
-		for (const candidate of candidates) {
-			if (questions.length >= mcTarget) break;
-			const answerTerm = candidate.keywords[0];
-			const key = `${candidate.sentence.slice(0, 40)}|${answerTerm}`;
-			if (used.has(key)) continue;
+	for (const candidate of candidates) {
+		if (questions.length >= mcTarget) break;
+		const statementKey = candidate.sentence.toLowerCase().replace(/\s+/g, ' ').slice(0, 100);
+		if (usedStatements.has(statementKey)) continue;
 
-			const pattern = new RegExp(`\\b${answerTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+		const answerTerms = [...new Set(tokenize(candidate.sentence))]
+			.filter((term) => poolSet.has(term) && !usedAnswers.has(term))
+			.sort((a, b) => (poolOrder.get(a) ?? Number.MAX_SAFE_INTEGER) - (poolOrder.get(b) ?? Number.MAX_SAFE_INTEGER));
+		let question: QuizQuestion | undefined;
+
+		for (const answerTerm of answerTerms) {
+			const pattern = new RegExp(`\\b${escapeRegex(answerTerm)}\\b`, 'i');
 			if (!pattern.test(candidate.sentence)) continue;
 
-			const promptText = candidate.sentence.replace(pattern, '_____');
-			if (promptText.includes('_____') === false) continue;
-
 			const distractors = seededShuffle(
-				pool.filter((term) => term !== answerTerm && !answerTerm.includes(term) && !term.includes(answerTerm) && term.length >= 4),
-				hashSeed(answerTerm)
+				pool.filter(
+					(term) =>
+						term !== answerTerm &&
+						term.length >= 3 &&
+						!candidate.sentence.toLowerCase().includes(term.toLowerCase())
+				),
+				hashSeed(`${candidate.sentence}|${answerTerm}`)
 			).slice(0, 3);
-			if (distractors.length < 3) continue;
+			if (distractors.length === 0) continue;
 
 			const optionTerms = seededShuffle([answerTerm, ...distractors], hashSeed(candidate.sentence));
-			const answer = optionTerms.indexOf(answerTerm);
-			used.add(key);
-			questions.push({
+			const promptText = candidate.sentence.replace(pattern, '_____');
+			question = {
 				id: `q${questions.length + 1}`,
 				type: 'mc',
-				prompt: `Which term best completes this statement? “${truncate(promptText, 320)}”`,
-				options: optionTerms.map((term) => term.replace(/\b\w/g, (c) => c.toUpperCase())),
-				answer,
+				prompt: `Complete the source statement: “${truncate(promptText, 320)}”`,
+				options: optionTerms.map((term) => term.replace(/\b\w/g, (character) => character.toUpperCase())),
+				answer: optionTerms.indexOf(answerTerm),
 				explanation: `The source says: “${truncate(candidate.sentence, 300)}”`,
-				sourceNoteId: noteIdFor(source),
-				sourceTitle: source.title
-			});
+				sourceNoteId: noteIdFor(candidate.source),
+				sourceTitle: candidate.source.title
+			};
+			usedAnswers.add(answerTerm);
 			break;
 		}
-	}
 
-	if (questions.length < mcTarget) {
-		for (const source of sources) {
-			const keywords = (source.keywords?.length ? source.keywords : extractKeywords(source.content, 6).map((k) => k.term)).slice(0, 4);
-			const distractors = seededShuffle(pool.filter((term) => !keywords.includes(term)), hashSeed(source.title)).slice(0, 3);
-			for (const term of keywords) {
-				if (questions.length >= mcTarget || distractors.length < 3) break;
-				const optionTerms = seededShuffle([term, ...distractors], hashSeed(source.title + term));
-				questions.push({
-					id: `q${questions.length + 1}`,
-					type: 'mc',
-					prompt: `Which term is most closely associated with “${source.title}”?`,
-					options: optionTerms.map((value) => value.replace(/\b\w/g, (c) => c.toUpperCase())),
-					answer: optionTerms.indexOf(term),
-					explanation: `“${term}” is a key term in ${source.title}.`,
-					sourceNoteId: noteIdFor(source),
-					sourceTitle: source.title
-				});
-			}
+		if (question) {
+			usedStatements.add(statementKey);
+			questions.push(question);
 		}
 	}
 
-	questions.push(...buildTrueFalse(sources, pool, options, requested - questions.length, used));
+	questions.push(
+		...buildTrueFalse(quizSources, pool, options, requested - questions.length, usedStatements)
+	);
 
 	const ordered = seededShuffle(questions, hashSeed(`quiz|${difficulty}|${options.focus ?? ''}`)).map(
 		(question, index) => ({ ...question, id: `q${index + 1}` })
 	);
-	const flashcards = buildFlashcards(ordered, sources);
+	const identification = includeIdentification
+		? buildIdentification(
+				quizSources,
+				{ ...options, ownNotes: '' },
+				Math.max(2, Math.min(5, Math.round(requested / 4)))
+			)
+		: [];
+	if (includeIdentification && identification.length === 0) {
+		throw new Error('These notes do not contain enough distinct, sentence-level information to build identification questions. Choose more detailed notes or add your own context.');
+	}
+	const numberedIdentification = identification.map((question, index) => ({
+		...question,
+		id: `i${index + 1}`
+	}));
+	const flashcards = buildFlashcards(ordered, quizSources);
 
 	const contentParts = [
 		'# Practice quiz',
 		'',
-		`${ordered.length} ${difficulty} questions generated from community notes. Choose one answer per item, then check the explanations.`,
+		`${ordered.length + numberedIdentification.length} ${difficulty} questions generated from ${sourceDescription}. Choose one answer or write the missing term, then check the explanations.`,
 		'',
 		...ordered.map((question, index) => {
 			const optionsList = question.options
@@ -487,6 +531,16 @@ function buildQuiz(sources: StudySource[], options: StudyOptions): StudyResult {
 				.join('\n');
 			return `## ${index + 1}. ${question.prompt}\n\n${optionsList}\n\n**Answer:** ${String.fromCharCode(65 + question.answer)}. ${question.options[question.answer]}\n\n${question.explanation}${question.sourceNoteId ? ` [Read the source note](/notes/${question.sourceNoteId})` : ''}\n\n`;
 		}),
+		...(numberedIdentification.length
+			? [
+					'## Identification',
+					'',
+					...numberedIdentification.map(
+						(question, index) =>
+							`### ${index + 1}. ${question.prompt}\n\n**Answer:** ${question.answer}\n\n${question.explanation}${question.sourceNoteId ? ` [Read the source note](/notes/${question.sourceNoteId})` : ''}\n\n`
+					)
+				]
+			: []),
 		'> Quiz items are machine-generated from community notes and may contain ambiguity. Use them for recall practice, not as an official exam key.'
 	];
 
@@ -496,9 +550,15 @@ function buildQuiz(sources: StudySource[], options: StudyOptions): StudyResult {
 		payload: {
 			engine: ENGINE,
 			questions: ordered,
+			identification: numberedIdentification,
 			flashcards,
 			sources: sources.map((source) => ({ id: source.id, title: source.title, status: source.status })),
-			options: { questionCount: ordered.length, difficulty, trueFalse: ordered.filter((question) => question.type === 'tf').length }
+			options: {
+				questionCount: ordered.length + numberedIdentification.length,
+				difficulty,
+				trueFalse: ordered.filter((question) => question.type === 'tf').length,
+				identificationCount: numberedIdentification.length
+			}
 		}
 	};
 }
@@ -609,18 +669,20 @@ function buildEssays(sources: StudySource[]): EssayPrompt[] {
 
 function buildExam(sources: StudySource[], options: StudyOptions): StudyResult {
 	const sections = resolveExamSections(options);
-	const objective = buildQuiz(sources, options);
+	const examSources = sourcesWithOwnNotes(sources, options);
+	const examOptions = { ...options, ownNotes: '' };
+	const objective = buildQuiz(examSources, examOptions, false);
 	const allQuestions = objective.payload.questions ?? [];
 	const includeTrueFalse = sections.includes('true_false');
 	const questions = allQuestions.filter((question) => includeTrueFalse || question.type !== 'tf');
 	const identification = sections.includes('identification')
 		? buildIdentification(
-				sources,
-				options,
+				examSources,
+				examOptions,
 				Math.max(2, Math.min(8, Math.round((options.questionCount ?? 10) / 3)))
 			)
 		: [];
-	const essays = sections.includes('essay') ? buildEssays(sources) : [];
+	const essays = sections.includes('essay') ? buildEssays(examSources) : [];
 	const requestedTime = Number(options.examTimeLimit ?? 45);
 	const timeLimitMinutes = Number.isFinite(requestedTime)
 		? Math.min(180, Math.max(5, Math.round(requestedTime)))
@@ -705,7 +767,13 @@ export function generateStudy(kind: StudyKind, sources: StudySource[], options: 
 		case 'reviewer':
 			return buildReviewer(sources, options);
 		case 'quiz':
-			return buildQuiz(sources, options);
+			{
+				const result = buildQuiz(sources, options);
+				if (!result.payload.questions?.length) {
+					throw new Error('These notes do not contain enough distinct, sentence-level information to build a quiz. Choose more detailed notes or add your own context.');
+				}
+				return result;
+			}
 		case 'exam':
 			return buildExam(sources, options);
 		case 'keywords':

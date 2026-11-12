@@ -606,6 +606,9 @@ drop policy if exists "generations read own" on public.ai_generations;
 create policy "generations read own" on public.ai_generations for select to authenticated using (user_id = auth.uid());
 drop policy if exists "generations insert own" on public.ai_generations;
 create policy "generations insert own" on public.ai_generations for insert to authenticated with check (user_id = auth.uid());
+drop policy if exists "generations update own" on public.ai_generations;
+create policy "generations update own" on public.ai_generations for update to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
 drop policy if exists "generations delete own" on public.ai_generations;
 create policy "generations delete own" on public.ai_generations for delete to authenticated using (user_id = auth.uid());
 

@@ -140,8 +140,8 @@
 							<p class="kicker !text-[0.6rem]">Active recall</p>
 							<h2 class="mt-1 font-display text-lg font-extrabold">Test yourself on this material</h2>
 							<p class="mt-1 max-w-lg text-[0.78rem] leading-relaxed text-ink-soft">
-								{data.questionCount} multiple-choice and true/false items. Your score is saved to quiz history so you can see
-								progress.
+								{data.questionCount} multiple-choice and true/false items
+								{#if data.identificationCount} plus {data.identificationCount} identification items{/if}. Your score is saved to quiz history so you can track progress.
 							</p>
 						</div>
 						<a href="/study/{generation.id}/quiz" class="btn btn-primary shrink-0"><Target size={16} /> Start quiz</a>

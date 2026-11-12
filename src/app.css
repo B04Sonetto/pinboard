@@ -499,7 +499,7 @@
 		justify-content: center;
 	}
 
-	.sticky {
+	.note-sticky {
 		position: relative;
 		display: flex;
 		flex-direction: column;
@@ -515,8 +515,8 @@
 			transform 160ms ease,
 			box-shadow 160ms ease;
 	}
-	.sticky:hover,
-	.sticky:focus-within {
+	.note-sticky:hover,
+	.note-sticky:focus-within {
 		transform: rotate(0deg) translateY(-4px) scale(1.015);
 		box-shadow: var(--shadow-note-lift);
 		z-index: 5;
@@ -739,9 +739,12 @@
 	}
 
 	.prose-pinboard {
+		min-width: 0;
+		max-width: 100%;
 		font-size: 1.0625rem;
 		line-height: 1.75;
 		color: #2b2740;
+		overflow-wrap: anywhere;
 	}
 	.prose-pinboard > * + * {
 		margin-top: 1rem;
