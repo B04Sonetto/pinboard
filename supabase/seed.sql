@@ -1,7 +1,4 @@
--- ============================================================================
--- Pinboard — demo content
--- Run AFTER supabase/setup.sql. Safe to re-run.
--- ============================================================================
+
 
 -- ── Departments ─────────────────────────────────────────────────────────────
 insert into public.departments (id, name, short_name, color, description, sort_order) values

@@ -1,8 +1,3 @@
--- ============================================================================
--- Pinboard — database setup
--- Run this once in the Supabase dashboard → SQL Editor.
--- Safe to re-run: types, tables, functions and policies are idempotent.
--- ============================================================================
 
 create extension if not exists pgcrypto;
 
