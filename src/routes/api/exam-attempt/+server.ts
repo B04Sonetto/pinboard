@@ -1,15 +1,9 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { IdentificationQuestion, QuizQuestion } from '$lib/types';
+import { answersMatch } from '$lib/utils';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-function normalizeAnswer(value: unknown): string {
-	return String(value ?? '')
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, ' ')
-		.trim();
-}
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.user) return json({ error: 'Sign in to save exam results.' }, { status: 401 });
@@ -70,7 +64,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	const identificationResults = identification.map((question) => {
 		const chosen = String(identificationAnswers[question.id] ?? '');
-		const correct = normalizeAnswer(chosen) === normalizeAnswer(question.answer);
+		const correct = answersMatch(chosen, question.answer);
 		if (correct) score += 1;
 		return {
 			id: question.id,

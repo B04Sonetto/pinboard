@@ -12,5 +12,5 @@
 			style="top:{-size * 0.26}px;margin-left:{-(size * 0.23)}px;width:{size * 0.46}px;height:{size * 0.46}px"
 		></span>
 	</span>
-	<span class="font-display text-[1.625rem] font-extrabold leading-none tracking-[-0.02em]">Pinboard</span>
+	<span class="hidden font-display text-[1.625rem] font-extrabold leading-none tracking-[-0.02em] min-[380px]:inline">Pinboard</span>
 </a>

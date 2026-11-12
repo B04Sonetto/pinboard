@@ -44,9 +44,19 @@
 	let extractError = $state('');
 
 	const programs = $derived(data.taxonomy.programs.filter((item) => item.department_id === department));
-	const subjects = $derived(
-		data.taxonomy.subjects.filter(
-			(item) => item.department_id === department && (!program || item.program_id === program)
+	const departmentSubjects = $derived(
+		data.taxonomy.subjects.filter((item) => item.department_id === department)
+	);
+	const subjects = $derived.by(() => {
+		if (!program) return departmentSubjects;
+		const programSubjects = departmentSubjects.filter((item) => item.program_id === program);
+		return programSubjects.length ? programSubjects : departmentSubjects;
+	});
+	const usingDepartmentFallback = $derived(
+		Boolean(
+			program &&
+				departmentSubjects.length > 0 &&
+				!departmentSubjects.some((item) => item.program_id === program)
 		)
 	);
 	const topics = $derived(data.taxonomy.topics.filter((item) => item.subject_id === subject));
@@ -269,6 +279,11 @@
 							<option value={item.id}>{item.code} · {item.name}</option>
 						{/each}
 					</select>
+					{#if usingDepartmentFallback}
+						<span class="hint mt-1">
+							No subjects are listed for this course yet, so every subject in your department is shown.
+						</span>
+					{/if}
 					{#if department && subjects.length === 0}
 						<span class="hint mt-1">
 							No subjects listed yet for this department. <a href="/suggestions" class="link">Suggest one</a>.

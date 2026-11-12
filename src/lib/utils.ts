@@ -210,6 +210,70 @@ export function clamp(value: number, min: number, max: number) {
 	return Math.min(max, Math.max(min, value));
 }
 
+/** Lower-case, strip punctuation/articles, and collapse spacing for free-text answers. */
+export function normalizeFreeText(value: unknown): string {
+	return String(value ?? '')
+		.normalize('NFKC')
+		.toLowerCase()
+		.replace(/[’'`]/g, '')
+		.replace(/[^\p{L}\p{N}]+/gu, ' ')
+		.replace(/\b(?:the|a|an)\b/g, ' ')
+		.replace(/\s+/g, ' ')
+		.trim();
+}
+
+/** Crude singular form: enough to accept "keys" for "key" without a dictionary. */
+function singularize(value: string): string {
+	return value
+		.split(' ')
+		.map((word) => (word.length > 4 && /ies$/.test(word) ? `${word.slice(0, -3)}y` : word.length > 3 && /s$/.test(word) && !/ss$/.test(word) ? word.slice(0, -1) : word))
+		.join(' ');
+}
+
+function editDistance(a: string, b: string): number {
+	if (a === b) return 0;
+	if (!a.length) return b.length;
+	if (!b.length) return a.length;
+	let previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+	for (let i = 1; i <= a.length; i += 1) {
+		const current = [i];
+		for (let j = 1; j <= b.length; j += 1) {
+			current[j] = Math.min(
+				previous[j] + 1,
+				current[j - 1] + 1,
+				previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+			);
+		}
+		previous = current;
+	}
+	return previous[b.length];
+}
+
+/**
+ * Grade a typed identification answer. Accepts exact matches, plural/typo
+ * variants, and answers that add a short qualifier ("primary key" for "key" is
+ * not enough, but "database index" for "index" is).
+ */
+export function answersMatch(given: unknown, expected: unknown): boolean {
+	const submitted = normalizeFreeText(given);
+	const answer = normalizeFreeText(expected);
+	if (!submitted || !answer) return false;
+	if (submitted === answer) return true;
+
+	const submittedSingular = singularize(submitted);
+	const answerSingular = singularize(answer);
+	if (submittedSingular === answerSingular) return true;
+
+	const shorter =
+		submittedSingular.length <= answerSingular.length ? submittedSingular : answerSingular;
+	const longer =
+		submittedSingular.length <= answerSingular.length ? answerSingular : submittedSingular;
+	if (shorter.length >= 5 && longer.includes(shorter)) return true;
+
+	const limit = Math.max(submittedSingular.length, answerSingular.length) >= 10 ? 2 : 1;
+	return editDistance(submittedSingular, answerSingular) <= limit;
+}
+
 export type CitationStyle = 'apa' | 'mla' | 'chicago';
 
 export function safeHttpUrl(value: string | null | undefined): string | null {

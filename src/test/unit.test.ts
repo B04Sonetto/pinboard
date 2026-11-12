@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { extractKeywords, tokenize } from '../lib/keywords.js';
 import {
+	answersMatch,
 	citationFor,
 	isLspuStudentEmail,
 	normalizeLspuEmail,
@@ -158,6 +159,17 @@ describe('Pinboard Academic Engine Tests', () => {
 			assert.strictEqual(wordCount(''), 0);
 			assert.ok(readingTime('a '.repeat(300)).includes('min read'));
 		});
+
+		it('grades typed identification answers with sensible tolerance', () => {
+			assert.strictEqual(answersMatch('Primary Key', 'primary key'), true);
+			assert.strictEqual(answersMatch('primary keys', 'primary key'), true);
+			assert.strictEqual(answersMatch('the primary key', 'primary key'), true);
+			assert.strictEqual(answersMatch('database index', 'index'), true);
+			assert.strictEqual(answersMatch('normlization', 'normalization'), true);
+			assert.strictEqual(answersMatch('key', 'primary key'), false);
+			assert.strictEqual(answersMatch('form', 'normal form'), false);
+			assert.strictEqual(answersMatch('', 'primary key'), false);
+		});
 	});
 
 	describe('Academic Provenance Citation', () => {
@@ -171,7 +183,7 @@ describe('Pinboard Academic Engine Tests', () => {
 		it('formats APA citations correctly', () => {
 			const apa = citationFor(mockNote, 'apa', 'https://pinboard.edu/notes/1');
 			assert.ok(apa.includes('Santos, E.'));
-			assert.ok(apa.includes('(2026)'));
+			assert.ok(apa.includes('(2026,'));
 			assert.ok(apa.includes('Database Normalization Notes'));
 			assert.ok(apa.includes('Pinboard.'));
 		});

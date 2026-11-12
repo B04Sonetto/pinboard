@@ -11,7 +11,7 @@ insert into public.departments (id, name, short_name, color, description, sort_o
   ('ccje',  'College of Criminal Justice Education',                 'CCJE',  '#FFC9A8', 'Criminology and criminal justice education.', 4),
   ('eng',   'College of Engineering',                                'COE',   '#BDEBCB', 'Computer, electrical, and electronics engineering.', 5),
   ('cit',   'College of Industrial Technology',                       'CIT',   '#AEE4DF', 'Industrial technology and its applied specializations.', 6),
-  ('cihtm', 'College of Hospitality Management and Tourism',          'CIHTM', '#FFD3A8', 'Hospitality and tourism management programs.', 7),
+  ('cihtm', 'College of International Hospitality and Tourism Management', 'CIHTM', '#FFD3A8', 'Hospitality and tourism management programs.', 7),
   ('edu',   'College of Teacher Education',                           'CTE',   '#FFC9DC', 'Elementary, secondary, physical, and technical-vocational teacher education.', 8)
 on conflict (id) do update set
   name = excluded.name,
@@ -65,8 +65,50 @@ insert into public.subjects (id, program_id, department_id, code, name, year_lev
   ('bbbbbbbb-0000-4000-8000-00000000000c', 'aaaaaaaa-0000-4000-8000-000000000007', 'eng', 'MECH201', 'Mechanics of Deformable Bodies', 2, 2, 'Stress, strain, beams and bending moments.', true),
   ('bbbbbbbb-0000-4000-8000-00000000000d', 'aaaaaaaa-0000-4000-8000-00000000000a', 'as', 'SOC101', 'Understanding Society', 1, 1, 'Culture, institutions and social structure.', true),
   ('bbbbbbbb-0000-4000-8000-00000000000e', 'aaaaaaaa-0000-4000-8000-00000000000a', 'as', 'PSY101', 'Introduction to Psychology', 1, 1, 'Learning, memory, development and research.', true),
-  ('bbbbbbbb-0000-4000-8000-00000000000f', 'aaaaaaaa-0000-4000-8000-000000000009', 'as', 'COMM101', 'Media & Society', 1, 2, 'Media literacy, audiences and communication ethics.', true)
-on conflict (id) do nothing;
+  ('bbbbbbbb-0000-4000-8000-00000000000f', 'aaaaaaaa-0000-4000-8000-00000000000a', 'as', 'COMM101', 'Media & Society', 1, 2, 'Media literacy, audiences and communication ethics.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000010', 'aaaaaaaa-0000-4000-8000-000000000006', 'edu', 'EDUC210', 'Foundations of Secondary Education', 2, 1, 'Adolescent learning, curriculum, and subject-area pedagogy.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000011', 'aaaaaaaa-0000-4000-8000-000000000006', 'edu', 'ASSESS201', 'Assessment of Learning 1', 3, 1, 'Test construction, grading, and feedback.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000012', 'aaaaaaaa-0000-4000-8000-000000000008', 'eng', 'EE201', 'Electrical Circuits 1', 2, 1, 'DC circuits, network theorems, and circuit analysis.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000013', 'aaaaaaaa-0000-4000-8000-000000000008', 'eng', 'EE301', 'Power Systems', 3, 2, 'Generation, transmission, and distribution fundamentals.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000014', 'aaaaaaaa-0000-4000-8000-00000000000b', 'bus', 'OA101', 'Office Procedures and Administration', 1, 1, 'Office systems, records, and professional communication.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000015', 'aaaaaaaa-0000-4000-8000-00000000000b', 'bus', 'OA201', 'Business Communication', 2, 2, 'Correspondence, reports, and workplace etiquette.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000016', 'aaaaaaaa-0000-4000-8000-00000000000c', 'cs', 'MIT501', 'Advanced Database Systems', 1, 1, 'Distributed databases, tuning, and data modeling.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000017', 'aaaaaaaa-0000-4000-8000-00000000000c', 'cs', 'MIT502', 'Research Methods in IT', 1, 2, 'Research design, literature review, and academic writing.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000018', 'aaaaaaaa-0000-4000-8000-00000000000d', 'ccje', 'CRIM101', 'Introduction to Criminology', 1, 1, 'Theories of crime, criminal behavior, and the justice system.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000019', 'aaaaaaaa-0000-4000-8000-00000000000d', 'ccje', 'CRIM201', 'Criminal Law 1', 2, 1, 'Felonies, elements of crimes, and criminal liability.', true),
+  ('bbbbbbbb-0000-4000-8000-00000000001a', 'aaaaaaaa-0000-4000-8000-00000000000d', 'ccje', 'CRIM301', 'Criminalistics', 3, 2, 'Forensic science, evidence collection, and laboratory examination.', true),
+  ('bbbbbbbb-0000-4000-8000-00000000001b', 'aaaaaaaa-0000-4000-8000-00000000000d', 'ccje', 'CRIM401', 'Criminal Justice System', 4, 1, 'The pillars of the justice system and case flow.', true),
+  ('bbbbbbbb-0000-4000-8000-00000000001c', 'aaaaaaaa-0000-4000-8000-00000000000e', 'eng', 'ECE201', 'Electronic Circuits', 2, 1, 'Diodes, transistors, amplifiers, and circuit troubleshooting.', true),
+  ('bbbbbbbb-0000-4000-8000-00000000001d', 'aaaaaaaa-0000-4000-8000-00000000000e', 'eng', 'ECE301', 'Signals and Systems', 3, 1, 'Continuous and discrete signals, transforms, and filters.', true),
+  ('bbbbbbbb-0000-4000-8000-00000000001e', 'aaaaaaaa-0000-4000-8000-00000000000f', 'cihtm', 'HM101', 'Fundamentals of Hospitality Management', 1, 1, 'Hospitality operations, service standards, and guest experience.', true),
+  ('bbbbbbbb-0000-4000-8000-00000000001f', 'aaaaaaaa-0000-4000-8000-00000000000f', 'cihtm', 'HM201', 'Food and Beverage Operations', 2, 2, 'Restaurant service, cost control, and menu planning.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000020', 'aaaaaaaa-0000-4000-8000-000000000010', 'cihtm', 'TM101', 'Principles of Tourism', 1, 1, 'Tourism systems, destinations, and sustainability.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000021', 'aaaaaaaa-0000-4000-8000-000000000010', 'cihtm', 'TM201', 'Tourism Planning and Development', 3, 1, 'Destination planning, policy, and community impact.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000022', 'aaaaaaaa-0000-4000-8000-000000000011', 'edu', 'PE101', 'Foundations of Physical Education', 1, 1, 'Movement concepts, fitness, and health-related activity.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000023', 'aaaaaaaa-0000-4000-8000-000000000011', 'edu', 'PE201', 'Sports and Games Coaching', 2, 2, 'Coaching principles, drills, and sportsmanship.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000024', 'aaaaaaaa-0000-4000-8000-000000000012', 'edu', 'TLE101', 'Introduction to Technology and Livelihood Education', 1, 1, 'TLE curriculum, tools, and laboratory safety.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000025', 'aaaaaaaa-0000-4000-8000-000000000012', 'edu', 'TLE201', 'Instructional Materials in TLE', 2, 1, 'Preparing and evaluating hands-on learning materials.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000026', 'aaaaaaaa-0000-4000-8000-000000000013', 'edu', 'TVT101', 'Foundations of Technical-Vocational Education', 1, 1, 'TVET systems, competency standards, and training design.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000027', 'aaaaaaaa-0000-4000-8000-000000000013', 'edu', 'TVT201', 'Assessment in Technical-Vocational Education', 2, 2, 'Competency assessment, rubrics, and feedback.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000028', 'aaaaaaaa-0000-4000-8000-000000000014', 'edu', 'CTP101', 'Foundations of Teaching', 1, 1, 'Learner-centered teaching, classroom management, and ethics.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000029', 'aaaaaaaa-0000-4000-8000-000000000014', 'edu', 'CTP102', 'Field Study and Practice Teaching', 1, 2, 'Observation, lesson delivery, and reflective practice.', true),
+  ('bbbbbbbb-0000-4000-8000-00000000002a', 'aaaaaaaa-0000-4000-8000-000000000015', 'cit', 'DRFT101', 'Technical Drafting', 1, 1, 'Orthographic projection, dimensioning, and CAD basics.', true),
+  ('bbbbbbbb-0000-4000-8000-00000000002b', 'aaaaaaaa-0000-4000-8000-000000000015', 'cit', 'ELEC101', 'Basic Electricity', 1, 2, 'Circuits, Ohm''s law, and electrical safety.', true),
+  ('bbbbbbbb-0000-4000-8000-00000000002c', 'aaaaaaaa-0000-4000-8000-000000000015', 'cit', 'AUTO101', 'Automotive Fundamentals', 2, 1, 'Engine systems, tools, and preventive maintenance.', true),
+  ('bbbbbbbb-0000-4000-8000-00000000002d', 'aaaaaaaa-0000-4000-8000-000000000015', 'cit', 'HVAC101', 'Refrigeration and Air Conditioning', 2, 2, 'Refrigeration cycle, components, and servicing.', true),
+  ('bbbbbbbb-0000-4000-8000-00000000002e', 'aaaaaaaa-0000-4000-8000-000000000015', 'cit', 'FBPSM101', 'Food Preparation and Service Management', 2, 2, 'Food safety, preparation methods, and service operations.', true),
+  ('bbbbbbbb-0000-4000-8000-00000000002f', 'aaaaaaaa-0000-4000-8000-000000000015', 'cit', 'ELX201', 'Electronics Technology', 2, 1, 'Semiconductors, circuits, and troubleshooting.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000030', 'aaaaaaaa-0000-4000-8000-000000000015', 'cit', 'ARCH201', 'Architectural Drafting', 2, 2, 'Building plans, elevations, and detailing.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000031', 'aaaaaaaa-0000-4000-8000-000000000009', 'as', 'BIO101', 'General Biology 1', 1, 1, 'Cell structure, genetics, and biological processes.', true),
+  ('bbbbbbbb-0000-4000-8000-000000000032', 'aaaaaaaa-0000-4000-8000-000000000009', 'as', 'BIO201', 'Ecology and Evolution', 2, 2, 'Populations, ecosystems, and evolutionary mechanisms.', true)
+on conflict (id) do update set
+  program_id = excluded.program_id,
+  department_id = excluded.department_id,
+  code = excluded.code,
+  name = excluded.name,
+  year_level = excluded.year_level,
+  semester = excluded.semester,
+  description = excluded.description;
 
 -- ── Topics ──────────────────────────────────────────────────────────────────
 insert into public.topics (id, subject_id, name, description) values
@@ -96,8 +138,46 @@ insert into public.topics (id, subject_id, name, description) values
   ('cccccccc-0000-4000-8000-000000000018', 'bbbbbbbb-0000-4000-8000-00000000000e', 'Memory & Learning', 'Encoding, retrieval, spacing and metacognition.'),
   ('cccccccc-0000-4000-8000-000000000019', 'bbbbbbbb-0000-4000-8000-00000000000f', 'Media Literacy', 'Source evaluation, framing and responsible sharing.'),
   ('cccccccc-0000-4000-8000-00000000001a', 'bbbbbbbb-0000-4000-8000-000000000007', 'Process Costing', 'Equivalent units and cost allocation across departments.'),
-  ('cccccccc-0000-4000-8000-00000000001b', 'bbbbbbbb-0000-4000-8000-000000000005', 'Documentation', 'Writing the technical chapters of a capstone paper.')
-on conflict (id) do nothing;
+  ('cccccccc-0000-4000-8000-00000000001b', 'bbbbbbbb-0000-4000-8000-000000000005', 'Documentation', 'Writing the technical chapters of a capstone paper.'),
+  ('cccccccc-0000-4000-8000-00000000001c', 'bbbbbbbb-0000-4000-8000-000000000010', 'Adolescent Learning', 'How secondary students think, motivate themselves, and learn.'),
+  ('cccccccc-0000-4000-8000-00000000001d', 'bbbbbbbb-0000-4000-8000-000000000011', 'Test Construction', 'Table of specifications, item types, and validity.'),
+  ('cccccccc-0000-4000-8000-00000000001e', 'bbbbbbbb-0000-4000-8000-000000000012', 'DC Circuit Analysis', 'Ohm''s law, Kirchhoff''s laws, and network theorems.'),
+  ('cccccccc-0000-4000-8000-00000000001f', 'bbbbbbbb-0000-4000-8000-000000000013', 'Transmission & Distribution', 'Power grids, transformers, and line losses.'),
+  ('cccccccc-0000-4000-8000-000000000020', 'bbbbbbbb-0000-4000-8000-000000000014', 'Records Management', 'Filing systems, retention, and office workflows.'),
+  ('cccccccc-0000-4000-8000-000000000021', 'bbbbbbbb-0000-4000-8000-000000000015', 'Business Correspondence', 'Memos, emails, and formal report writing.'),
+  ('cccccccc-0000-4000-8000-000000000022', 'bbbbbbbb-0000-4000-8000-000000000016', 'Distributed Databases', 'Replication, partitioning, and consistency trade-offs.'),
+  ('cccccccc-0000-4000-8000-000000000023', 'bbbbbbbb-0000-4000-8000-000000000017', 'Literature Review', 'Searching, synthesizing, and citing related studies.'),
+  ('cccccccc-0000-4000-8000-000000000024', 'bbbbbbbb-0000-4000-8000-000000000018', 'Theories of Crime', 'Biological, psychological, and sociological explanations.'),
+  ('cccccccc-0000-4000-8000-000000000025', 'bbbbbbbb-0000-4000-8000-000000000019', 'Elements of a Crime', 'Actus reus, mens rea, and criminal liability.'),
+  ('cccccccc-0000-4000-8000-000000000026', 'bbbbbbbb-0000-4000-8000-00000000001a', 'Forensic Evidence', 'Collection, chain of custody, and laboratory analysis.'),
+  ('cccccccc-0000-4000-8000-000000000027', 'bbbbbbbb-0000-4000-8000-00000000001b', 'Pillars of Justice', 'Law enforcement, prosecution, courts, and corrections.'),
+  ('cccccccc-0000-4000-8000-000000000028', 'bbbbbbbb-0000-4000-8000-00000000001c', 'Transistor Amplifiers', 'Biasing, gain, and small-signal models.'),
+  ('cccccccc-0000-4000-8000-000000000029', 'bbbbbbbb-0000-4000-8000-00000000001d', 'Fourier Analysis', 'Time and frequency representations of signals.'),
+  ('cccccccc-0000-4000-8000-00000000002a', 'bbbbbbbb-0000-4000-8000-00000000001e', 'Guest Experience', 'Service quality, expectations, and recovery.'),
+  ('cccccccc-0000-4000-8000-00000000002b', 'bbbbbbbb-0000-4000-8000-00000000001f', 'Food and Beverage Cost Control', 'Menu pricing, portion control, and inventory.'),
+  ('cccccccc-0000-4000-8000-00000000002c', 'bbbbbbbb-0000-4000-8000-000000000020', 'Tourism Systems', 'Tourism components, stakeholders, and impacts.'),
+  ('cccccccc-0000-4000-8000-00000000002d', 'bbbbbbbb-0000-4000-8000-000000000021', 'Destination Planning', 'Attraction development, policy, and sustainability.'),
+  ('cccccccc-0000-4000-8000-00000000002e', 'bbbbbbbb-0000-4000-8000-000000000022', 'Fitness and Movement', 'Components of fitness and movement screening.'),
+  ('cccccccc-0000-4000-8000-00000000002f', 'bbbbbbbb-0000-4000-8000-000000000023', 'Coaching Fundamentals', 'Season planning, skill progressions, and feedback.'),
+  ('cccccccc-0000-4000-8000-000000000030', 'bbbbbbbb-0000-4000-8000-000000000024', 'TLE Curriculum', 'Learning competencies and laboratory routines.'),
+  ('cccccccc-0000-4000-8000-000000000031', 'bbbbbbbb-0000-4000-8000-000000000025', 'Learning Materials', 'Choosing and evaluating hands-on resources.'),
+  ('cccccccc-0000-4000-8000-000000000032', 'bbbbbbbb-0000-4000-8000-000000000026', 'Competency Standards', 'Training regulations and competency-based learning.'),
+  ('cccccccc-0000-4000-8000-000000000033', 'bbbbbbbb-0000-4000-8000-000000000027', 'Competency Assessment', 'Evidence gathering, rubrics, and reassessment.'),
+  ('cccccccc-0000-4000-8000-000000000034', 'bbbbbbbb-0000-4000-8000-000000000028', 'Learner-Centered Teaching', 'Active learning, questioning, and classroom climate.'),
+  ('cccccccc-0000-4000-8000-000000000035', 'bbbbbbbb-0000-4000-8000-000000000029', 'Practice Teaching', 'Lesson delivery, observation notes, and reflection.'),
+  ('cccccccc-0000-4000-8000-000000000036', 'bbbbbbbb-0000-4000-8000-00000000002a', 'Orthographic Projection', 'Views, dimensions, and drafting standards.'),
+  ('cccccccc-0000-4000-8000-000000000037', 'bbbbbbbb-0000-4000-8000-00000000002b', 'Ohm''s Law', 'Voltage, current, resistance, and safety.'),
+  ('cccccccc-0000-4000-8000-000000000038', 'bbbbbbbb-0000-4000-8000-00000000002c', 'Engine Systems', 'Lubrication, cooling, fuel, and ignition basics.'),
+  ('cccccccc-0000-4000-8000-000000000039', 'bbbbbbbb-0000-4000-8000-00000000002d', 'Refrigeration Cycle', 'Compression, condensation, expansion, and evaporation.'),
+  ('cccccccc-0000-4000-8000-00000000003a', 'bbbbbbbb-0000-4000-8000-00000000002e', 'Food Safety', 'Hygiene, temperature control, and HACCP basics.'),
+  ('cccccccc-0000-4000-8000-00000000003b', 'bbbbbbbb-0000-4000-8000-00000000002f', 'Semiconductor Devices', 'Diodes, transistors, and basic troubleshooting.'),
+  ('cccccccc-0000-4000-8000-00000000003c', 'bbbbbbbb-0000-4000-8000-000000000030', 'Building Plans', 'Floor plans, elevations, sections, and details.'),
+  ('cccccccc-0000-4000-8000-00000000003d', 'bbbbbbbb-0000-4000-8000-000000000031', 'Cell Structure', 'Organelles, membranes, and cellular processes.'),
+  ('cccccccc-0000-4000-8000-00000000003e', 'bbbbbbbb-0000-4000-8000-000000000032', 'Ecosystems', 'Energy flow, biodiversity, and population dynamics.')
+on conflict (id) do update set
+  subject_id = excluded.subject_id,
+  name = excluded.name,
+  description = excluded.description;
 
 -- ── People (demo community) ────────────────────────────────────────────────
 insert into public.profiles (id, full_name, role, department_id, program_id, year_level, semester, bio, avatar_color) values
@@ -109,7 +189,7 @@ insert into public.profiles (id, full_name, role, department_id, program_id, yea
   ('11111111-1111-4111-8111-111111111106', 'Lea Santos', 'student', 'as', 'aaaaaaaa-0000-4000-8000-00000000000a', 1, 1, 'Psychology major interested in how people learn.', '#DCD0FF'),
   ('11111111-1111-4111-8111-111111111107', 'Ken Aquino', 'student', 'cs', 'aaaaaaaa-0000-4000-8000-000000000001', 4, 1, 'Capstone survivor. Happy to share the checklist.', '#FFE680'),
   ('11111111-1111-4111-8111-111111111108', 'Tess Villanueva', 'student', 'bus', 'aaaaaaaa-0000-4000-8000-000000000003', 2, 2, 'Cost accounting drills and reviewer swaps.', '#BFE0FF'),
-  ('11111111-1111-4111-8111-111111111109', 'Nina Flores', 'student', 'as', 'aaaaaaaa-0000-4000-8000-000000000009', 2, 2, 'Communication student. Media literacy advocate.', '#FFC9DC'),
+  ('11111111-1111-4111-8111-111111111109', 'Nina Flores', 'student', 'as', 'aaaaaaaa-0000-4000-8000-00000000000a', 2, 2, 'Psychology student. Media literacy advocate.', '#FFC9DC'),
   ('11111111-1111-4111-8111-111111111110', 'Elena Marquez', 'moderator', 'cs', 'aaaaaaaa-0000-4000-8000-000000000001', 4, 1, 'Community moderator. Reviews CS and engineering notes.', '#A9E5BF'),
   ('11111111-1111-4111-8111-111111111111', 'Pinboard Admin', 'admin', null, null, null, null, 'Platform administration account.', '#211D31'),
   ('11111111-1111-4111-8111-1111111111a1', 'Pinboard AI', 'student', null, null, null, null, 'Generated study material built from community notes.', '#DCD0FF')
@@ -1096,7 +1176,7 @@ $note$,
 
 -- 13. Media literacy
 ('dddddddd-0000-4000-8000-00000000000d',
- '11111111-1111-4111-8111-111111111109', 'as', 'aaaaaaaa-0000-4000-8000-000000000009',
+ '11111111-1111-4111-8111-111111111109', 'as', 'aaaaaaaa-0000-4000-8000-00000000000a',
  'bbbbbbbb-0000-4000-8000-00000000000f', 'cccccccc-0000-4000-8000-000000000019',
  'Media Literacy Checklist',
  'A practical checklist for evaluating sources, spotting framing and sharing responsibly.',

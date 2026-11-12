@@ -92,19 +92,26 @@
 {/snippet}
 
 <header class="topnav sticky top-0 z-40 border-b-[3px] border-ink bg-paper-card">
-	<div class="mx-auto flex min-h-[72px] max-w-[1360px] items-center gap-x-6 px-4 py-2 sm:px-6 lg:px-10">
+	<div class="mx-auto flex min-h-[68px] max-w-[1440px] items-center gap-x-4 px-3 py-2 sm:px-5 lg:px-8 2xl:gap-x-5">
 		<Logo size={30} />
 
-		<nav aria-label="Main" class="hidden min-w-0 flex-1 flex-nowrap items-center justify-center gap-x-[18px] 2xl:flex">
+		<nav
+			aria-label="Main"
+			class="hidden min-w-0 flex-1 flex-nowrap items-center justify-center gap-x-2.5 xl:flex 2xl:gap-x-4"
+		>
 			{#each links as link (link.href)}
-				<a href={link.href} class="topnav-link" aria-current={isActive(link.href) ? 'page' : undefined}>
+				<a
+					href={link.href}
+					class="topnav-link shrink-0 whitespace-nowrap !text-[0.8125rem] 2xl:!text-sm"
+					aria-current={isActive(link.href) ? 'page' : undefined}
+				>
 					<span>{link.label}</span>
 				</a>
 			{/each}
 		</nav>
 
-		<div class="ml-auto flex items-center gap-2.5 sm:gap-3">
-			{@render searchBox('nav-search', 'hidden w-[190px] 2xl:block')}
+		<div class="ml-auto flex shrink-0 items-center gap-2 sm:gap-2.5">
+			{@render searchBox('nav-search', 'hidden w-[158px] xl:block 2xl:w-[176px]')}
 
 			<a
 				href="/collection"
@@ -165,7 +172,7 @@
 
 			<button
 				type="button"
-				class="btn btn-secondary btn-icon 2xl:hidden"
+				class="btn btn-secondary btn-icon xl:hidden"
 				aria-label={menuOpen ? 'Close menu' : 'Open menu'}
 				aria-expanded={menuOpen}
 				aria-controls="mobile-menu"
@@ -177,7 +184,7 @@
 	</div>
 
 	{#if menuOpen}
-		<div id="mobile-menu" class="border-t-[3px] border-ink bg-paper-card px-4 pb-5 pt-3 sm:px-6 2xl:hidden">
+		<div id="mobile-menu" class="border-t-[3px] border-ink bg-paper-card px-4 pb-5 pt-3 sm:px-6 xl:hidden">
 			{@render searchBox('mobile-search', 'mb-3')}
 			<nav aria-label="Main" class="flex flex-col">
 				{#each links as link (link.href)}

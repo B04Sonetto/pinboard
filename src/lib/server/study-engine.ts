@@ -300,9 +300,516 @@ function escapeRegex(value: string): string {
 	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function buildTrueFalse(
+const GENERIC_TERMS = new Set([
+	'chapter',
+	'section',
+	'lesson',
+	'student',
+	'students',
+	'teacher',
+	'teachers',
+	'notes',
+	'note',
+	'summary',
+	'discussion',
+	'activity',
+	'activities',
+	'question',
+	'questions',
+	'answer',
+	'answers',
+	'page',
+	'pages',
+	'class',
+	'classes',
+	'course',
+	'courses',
+	'subject',
+	'module',
+	'modules',
+	'important',
+	'different',
+	'following',
+	'according',
+	'given',
+	'above',
+	'below',
+	'generally',
+	'place',
+	'places',
+	'every',
+	'part',
+	'parts',
+	'type',
+	'types',
+	'kind',
+	'kinds',
+	'number',
+	'numbers',
+	'thing',
+	'things',
+	'form',
+	'either',
+	'certain',
+	'specific'
+]);
+
+const TERM_VERBS = new Set([
+	'absorbed',
+	'adds',
+	'added',
+	'adding',
+	'allows',
+	'allowed',
+	'allowing',
+	'applied',
+	'based',
+	'becomes',
+	'becoming',
+	'built',
+	'calls',
+	'called',
+	'calling',
+	'caused',
+	'changes',
+	'changed',
+	'changing',
+	'communicates',
+	'communicating',
+	'compared',
+	'connects',
+	'connected',
+	'connecting',
+	'considered',
+	'consists',
+	'consisting',
+	'contains',
+	'converted',
+	'creating',
+	'created',
+	'creates',
+	'decreases',
+	'decreased',
+	'decreasing',
+	'defines',
+	'defined',
+	'defining',
+	'deletes',
+	'deleting',
+	'describes',
+	'described',
+	'describing',
+	'determined',
+	'developed',
+	'divided',
+	'emitted',
+	'ends',
+	'ending',
+	'fail',
+	'fails',
+	'fixed',
+	'formed',
+	'found',
+	'gives',
+	'given',
+	'giving',
+	'grouped',
+	'happens',
+	'happening',
+	'helps',
+	'helping',
+	'holds',
+	'holding',
+	'identifies',
+	'identified',
+	'identifying',
+	'includes',
+	'increasing',
+	'increases',
+	'increased',
+	'involves',
+	'involving',
+	'keeps',
+	'keeping',
+	'known',
+	'listed',
+	'made',
+	'makes',
+	'making',
+	'means',
+	'measured',
+	'moves',
+	'moving',
+	'needed',
+	'obtained',
+	'occurs',
+	'occurring',
+	'organizes',
+	'organizing',
+	'performed',
+	'points',
+	'pointing',
+	'produced',
+	'provides',
+	'providing',
+	'references',
+	'referencing',
+	'refers',
+	'released',
+	'removes',
+	'removed',
+	'removing',
+	'represents',
+	'representing',
+	'repeating',
+	'requires',
+	'required',
+	'requiring',
+	'retransmits',
+	'retransmitting',
+	'returns',
+	'returning',
+	'seen',
+	'selects',
+	'selecting',
+	'sets',
+	'setting',
+	'shows',
+	'shown',
+	'showing',
+	'speeds',
+	'speeding',
+	'starts',
+	'starting',
+	'stores',
+	'stored',
+	'storing',
+	'succeed',
+	'succeeds',
+	'takes',
+	'taken',
+	'taking',
+	'tested',
+	'translates',
+	'translating',
+	'updates',
+	'updating',
+	'uses',
+	'used',
+	'works',
+	'working',
+	'written'
+]);
+
+/**
+ * Noun phrases that end in -ing and read naturally as answers. Anything else
+ * ending in -ed/-ing is a verb phrase and makes a poor fill-in-the-blank.
+ */
+const VERB_PHRASE_EXCEPTIONS = new Set([
+	'active learning',
+	'blended learning',
+	'critical thinking',
+	'deep learning',
+	'design thinking',
+	'distance learning',
+	'machine learning'
+]);
+
+function isAnswerableTerm(term: string): boolean {
+	const lower = term.toLowerCase();
+	if (!isUsableTerm(lower)) return false;
+	const words = lower.split(/\s+/);
+	if (words.length === 1) return true;
+	if (VERB_PHRASE_EXCEPTIONS.has(lower)) return true;
+	return !/(?:ed|ing)$/i.test(words[words.length - 1]);
+}
+
+function isUsableTerm(term: string): boolean {
+	const words = term.split(/\s+/);
+	if (words.some((word) => TERM_VERBS.has(word))) return false;
+	return true;
+}
+
+/** Single-word modifiers such as "normal" or "atomic" read badly as answer choices. */
+function looksLikeModifier(term: string): boolean {
+	const words = term.split(/\s+/);
+	return words.length === 1 && /(?:al|ive|ic|ous|ary|able|ible|less|ful)$/i.test(term);
+}
+
+/** Distinct, human-readable key terms in frequency order. */
+function keyTermsFor(text: string, limit = 60): string[] {
+	const terms = extractKeywords(text, Math.min(limit * 2, 160))
+		.map((item) => item.term.trim().toLowerCase())
+		.filter((term) => term.length >= 3 && term.length <= 44)
+		.filter((term) => !/^\d+$/.test(term))
+		.filter((term) => !GENERIC_TERMS.has(term))
+		.filter(isAnswerableTerm)
+		.filter((term, index, all) => all.indexOf(term) === index);
+	return terms.slice(0, limit);
+}
+
+function termPattern(term: string): RegExp {
+	return new RegExp(`\\b${escapeRegex(term).replace(/\s+/g, '\\s+')}\\b`, 'i');
+}
+
+function displayTerm(term: string): string {
+	return term.replace(/\b[a-z]/g, (character) => character.toUpperCase());
+}
+
+function sharesWord(a: string, b: string): boolean {
+	const words = new Set(tokenize(a));
+	return tokenize(b).some((word) => words.has(word));
+}
+
+function sourceSentences(source: StudySource): string[] {
+	return splitSentences([source.summary, source.content].filter(Boolean).join('\n'));
+}
+
+const DEFINITION_PATTERN = new RegExp(
+	'^(?:(?:the|a|an)\\s+)?(.{3,60}?)\\s+' +
+		'(?:is\\s+defined\\s+as|are\\s+defined\\s+as|can\\s+be\\s+defined\\s+as|refers\\s+to|refer\\s+to|is\\s+called|are\\s+called|consists\\s+of|involves|describes|represents|means|is|are)\\s+' +
+		'(.{20,300})$',
+	'i'
+);
+
+const PRONOUN_SUBJECT = /^(?:this|these|those|it|they|there|such|each|every|which|that|one|some|many|both|all|he|she|we|you|i)\b/i;
+
+/** Return a clean definition subject (the answer) or null when it is not usable. */
+function cleanSubject(value: string): string | null {
+	const subject = value
+		.replace(/^[\s"'“”]+|[\s"'“”]+$/g, '')
+		.replace(/^(?:the|a|an)\s+/i, '')
+		.replace(/[,;:]+$/, '')
+		.trim();
+	if (subject.length < 3 || subject.length > 48) return null;
+	const words = subject.split(/\s+/);
+	if (words.length < 1 || words.length > 6) return null;
+	if (!/^[A-Za-z0-9][A-Za-z0-9\s'’.-]*$/.test(subject)) return null;
+	if (PRONOUN_SUBJECT.test(subject) || GENERIC_TERMS.has(subject.toLowerCase())) return null;
+	return subject;
+}
+
+interface ChoicePlan {
+	source: StudySource;
+	sentence: string;
+	answer: string;
+	prompt: string;
+	explanation: string;
+	kind: 'definition' | 'cloze';
+}
+
+function definitionPlans(source: StudySource): ChoicePlan[] {
+	const plans: ChoicePlan[] = [];
+	const seen = new Set<string>();
+	for (const sentence of sourceSentences(source)) {
+		const match = sentence.match(DEFINITION_PATTERN);
+		if (!match) continue;
+		const subject = cleanSubject(match[1]);
+		if (!subject) continue;
+		const definition = match[2].replace(/\s+/g, ' ').trim();
+		if (definition.length < 20) continue;
+		const key = subject.toLowerCase();
+		if (seen.has(key) || definition.toLowerCase().includes(key)) continue;
+		seen.add(key);
+		plans.push({
+			source,
+			sentence,
+			answer: subject,
+			prompt: `Which term matches this description? “${truncate(definition, 260)}”`,
+			explanation: `The source says: “${truncate(sentence, 300)}”`,
+			kind: 'definition'
+		});
+	}
+	return plans;
+}
+
+function clozePlans(source: StudySource, pool: string[], minSentence = 60): ChoicePlan[] {
+	const plans: ChoicePlan[] = [];
+	const sentences = sourceSentences(source).filter((sentence) => sentence.length >= minSentence);
+	const seen = new Set<string>();
+	const orderedTerms = [...pool].sort(
+		(a, b) => b.split(/\s+/).length - a.split(/\s+/).length || b.length - a.length
+	);
+	for (const term of orderedTerms) {
+		if (term.length < 3) continue;
+		const pattern = termPattern(term);
+		const sentence = sentences.find((candidate) => pattern.test(candidate));
+		if (!sentence) continue;
+		const match = sentence.match(pattern);
+		if (!match) continue;
+		const answer = match[0];
+		const key = answer.toLowerCase();
+		if (seen.has(key)) continue;
+		const promptText = sentence.replace(pattern, '_____');
+		if (!promptText.includes('_____')) continue;
+		seen.add(key);
+		plans.push({
+			source,
+			sentence,
+			answer,
+			prompt: `Fill in the missing term: “${truncate(promptText, 300)}”`,
+			explanation: `The source says: “${truncate(sentence, 300)}”`,
+			kind: 'cloze'
+		});
+	}
+	return plans;
+}
+
+function pickDistractors(answer: string, sentence: string, pool: string[], seed: number): string[] {
+	const answerWords = Math.max(1, new Set(tokenize(answer)).size);
+	const candidates = pool.filter((term) => {
+		if (term.toLowerCase() === answer.toLowerCase()) return false;
+		if (term.length < 3 || term.length > 44) return false;
+		if (looksLikeModifier(term)) return false;
+		if (sentence.toLowerCase().includes(term.toLowerCase())) return false;
+		return !sharesWord(term, answer);
+	});
+
+	return seededShuffle(candidates, seed)
+		.sort((a, b) => {
+			const shapeA =
+				Math.abs(a.split(' ').length - answerWords) + Math.abs(a.length - answer.length) / 24;
+			const shapeB =
+				Math.abs(b.split(' ').length - answerWords) + Math.abs(b.length - answer.length) / 24;
+			return shapeA - shapeB;
+		})
+		.slice(0, 3)
+		.map(displayTerm);
+}
+
+function buildMultipleChoice(
 	sources: StudySource[],
 	pool: string[],
+	options: StudyOptions,
+	limit: number,
+	usedAnswers: Set<string>,
+	usedPrompts: Set<string>
+): QuizQuestion[] {
+	if (limit <= 0) return [];
+	const tier = level(options);
+	const focus = focusList(options);
+	const questions: QuizQuestion[] = [];
+	const queues = sources.map((source) => {
+		const definitions = definitionPlans(source);
+		const cloze = clozePlans(source, pool, Math.max(60, tier.minSentence));
+		const plans = [...definitions, ...cloze];
+		const focusScore = (plan: ChoicePlan) =>
+			focus.filter((term) => plan.prompt.toLowerCase().includes(term.toLowerCase())).length;
+		return plans.sort(
+			(a, b) =>
+				focusScore(b) - focusScore(a) ||
+				(a.kind === 'definition' ? 0 : 1) - (b.kind === 'definition' ? 0 : 1)
+		);
+	});
+	const usedSentences = new Set<string>();
+	let allowSentenceReuse = false;
+
+	while (questions.length < limit) {
+		let progressed = false;
+
+		for (const queue of queues) {
+			if (questions.length >= limit) break;
+			const index = queue.findIndex(
+				(candidate) =>
+					!usedAnswers.has(candidate.answer.toLowerCase()) &&
+					!usedPrompts.has(candidate.prompt.toLowerCase()) &&
+					(allowSentenceReuse || !usedSentences.has(candidate.sentence.toLowerCase()))
+			);
+			if (index < 0) continue;
+			const plan = queue.splice(index, 1)[0];
+
+			const distractors = pickDistractors(
+				plan.answer,
+				plan.sentence,
+				pool,
+				hashSeed(plan.prompt)
+			);
+			if (distractors.length === 0) continue;
+
+			const answerDisplay = displayTerm(plan.answer);
+			const uniqueOptions = [answerDisplay];
+			for (const distractor of distractors) {
+				if (uniqueOptions.some((option) => option.toLowerCase() === distractor.toLowerCase())) continue;
+				uniqueOptions.push(distractor);
+				if (uniqueOptions.length >= 4) break;
+			}
+			if (uniqueOptions.length < 2) continue;
+
+			const shuffledOptions = seededShuffle(uniqueOptions, hashSeed(`${plan.prompt}|${plan.answer}`));
+			const answerIndex = shuffledOptions.findIndex(
+				(option) => option.toLowerCase() === answerDisplay.toLowerCase()
+			);
+			if (answerIndex < 0) continue;
+
+			usedAnswers.add(plan.answer.toLowerCase());
+			usedPrompts.add(plan.prompt.toLowerCase());
+			usedSentences.add(plan.sentence.toLowerCase());
+			progressed = true;
+			questions.push({
+				id: `q${questions.length + 1}`,
+				type: 'mc',
+				prompt: plan.prompt,
+				options: shuffledOptions,
+				answer: answerIndex,
+				explanation: plan.explanation,
+				sourceNoteId: noteIdFor(plan.source),
+				sourceTitle: plan.source.title
+			});
+		}
+
+		if (questions.length >= limit) break;
+		if (!progressed) {
+			// Every usable definition was already covered. Allow a second pass
+			// over the same sentences before giving up on the requested count.
+			if (allowSentenceReuse) break;
+			allowSentenceReuse = true;
+		}
+	}
+
+	return questions;
+}
+
+function negateStatement(sentence: string): string | null {
+	if (/\b(?:not|cannot)\b|n't\b/i.test(sentence)) return null;
+	const swaps: [RegExp, string][] = [
+		[/\bcan\b/i, 'cannot'],
+		[/\bwill\b/i, 'will not'],
+		[/\bmust\b/i, 'must not'],
+		[/\bare\b/i, 'are not'],
+		[/\bis\b/i, 'is not'],
+		[/\balways\b/i, 'never'],
+		[/\bincludes\b/i, 'excludes'],
+		[/\bincreases\b/i, 'decreases'],
+		[/\ballows\b/i, 'prevents'],
+		[/\bbefore\b/i, 'after'],
+		[/\bafter\b/i, 'before'],
+		[/\bmaximum\b/i, 'minimum'],
+		[/\bminimum\b/i, 'maximum'],
+		[/\bpositive\b/i, 'negative'],
+		[/\bnegative\b/i, 'positive'],
+		[/\bhigher\b/i, 'lower'],
+		[/\blower\b/i, 'higher'],
+		[/\bmore\b/i, 'less'],
+		[/\bless\b/i, 'more'],
+		[/\bvertical\b/i, 'horizontal'],
+		[/\bhorizontal\b/i, 'vertical'],
+		[/\bclockwise\b/i, 'counterclockwise'],
+		[/\bprimary\b/i, 'secondary'],
+		[/\bsecondary\b/i, 'primary'],
+		[/\ball\b/i, 'no'],
+		[/\bevery\b/i, 'no']
+	];
+	for (const [pattern, replacement] of swaps) {
+		if (replacement === 'must not' && /\beither\b/i.test(sentence)) continue;
+		if (!pattern.test(sentence)) continue;
+		const next = sentence.replace(pattern, replacement);
+		if (next !== sentence) return next;
+	}
+	return null;
+}
+
+function buildTrueFalse(
+	sources: StudySource[],
 	options: StudyOptions,
 	limit: number,
 	used: Set<string>
@@ -310,54 +817,47 @@ function buildTrueFalse(
 	if (limit <= 0) return [];
 	const tier = level(options);
 	const items: QuizQuestion[] = [];
-	const poolTerms = new Set(pool.flatMap((term) => tokenize(term)));
-	const candidates = sources.flatMap((source) =>
-		splitSentences([source.summary, source.content].filter(Boolean).join('\n'))
-			.map((sentence, index) => ({ source, sentence, index }))
-			.filter(
-				(candidate) =>
-					candidate.sentence.length >= Math.max(70, tier.minSentence) && candidate.sentence.length <= 320
-			)
+	const queues = sources.map((source) =>
+		seededShuffle(
+			sourceSentences(source)
+				.filter(
+					(sentence) => sentence.length >= Math.max(70, tier.minSentence) && sentence.length <= 320
+				)
+				.map((sentence) => ({ source, sentence })),
+			hashSeed(`tf|${source.id}|${options.focus ?? ''}|${options.questionCount ?? 8}`)
+		)
 	);
-	const ordered = seededShuffle(candidates, hashSeed(`tf|${options.focus ?? ''}|${options.questionCount ?? 8}`));
 
-	for (const candidate of ordered) {
-		if (items.length >= limit) break;
-		const tokens = tokenize(candidate.sentence).filter((token) => poolTerms.has(token) && token.length >= 4);
-		if (tokens.length === 0) continue;
+	while (items.length < limit) {
+		const before = items.length;
+		for (const queue of queues) {
+			if (items.length >= limit) break;
+			const candidate = queue.shift();
+			if (!candidate) continue;
+			const { source, sentence } = candidate;
 
-		const answerTerm = tokens[0];
-		const pattern = new RegExp(`\\b${escapeRegex(answerTerm)}\\b`, 'i');
-		if (!pattern.test(candidate.sentence)) continue;
+			const statementKey = sentence.toLowerCase().replace(/\s+/g, ' ').slice(0, 100);
+			if (used.has(statementKey)) continue;
 
-		const statementKey = candidate.sentence.toLowerCase().replace(/\s+/g, ' ').slice(0, 100);
-		if (used.has(statementKey)) continue;
+			const negated = negateStatement(sentence);
+			const statement = negated ?? sentence;
+			const isFalse = Boolean(negated);
 
-		const replacements = pool.filter(
-			(term) =>
-				term.length >= 4 &&
-				term !== answerTerm &&
-				!candidate.sentence.toLowerCase().includes(term.toLowerCase())
-		);
-		const makeFalse = replacements.length > 0 && hashSeed(candidate.sentence) % 2 === 0;
-		const replacement = makeFalse
-			? replacements[hashSeed(candidate.sentence + answerTerm) % replacements.length]
-			: null;
-		const statement = replacement ? candidate.sentence.replace(pattern, replacement) : candidate.sentence;
-
-		used.add(statementKey);
-		items.push({
-			id: '',
-			type: 'tf',
-			prompt: `True or false: “${truncate(statement, 320)}”`,
-			options: ['True', 'False'],
-			answer: replacement ? 1 : 0,
-			explanation: replacement
-				? `False. The source actually says: “${truncate(candidate.sentence, 300)}”`
-				: `True. The source says: “${truncate(candidate.sentence, 300)}”`,
-			sourceNoteId: noteIdFor(candidate.source),
-			sourceTitle: candidate.source.title
-		});
+			used.add(statementKey);
+			items.push({
+				id: '',
+				type: 'tf',
+				prompt: `True or false: “${truncate(statement, 320)}”`,
+				options: ['True', 'False'],
+				answer: isFalse ? 1 : 0,
+				explanation: isFalse
+					? `False. The source actually says: “${truncate(sentence, 300)}”`
+					: `True. The source says: “${truncate(sentence, 300)}”`,
+				sourceNoteId: noteIdFor(source),
+				sourceTitle: source.title
+			});
+		}
+		if (items.length === before) break;
 	}
 
 	return items;
@@ -411,8 +911,6 @@ function buildQuiz(
 	includeIdentification = true
 ): StudyResult {
 	const requested = Math.min(15, Math.max(3, Math.round(options.questionCount ?? 8)));
-	const focus = focusList(options);
-	const tier = level(options);
 	const difficulty = options.difficulty ?? 'standard';
 	const tfTarget = requested >= 6 ? Math.max(1, Math.round(requested * 0.25)) : 0;
 	const mcTarget = requested - tfTarget;
@@ -420,85 +918,27 @@ function buildQuiz(
 	const corpus = quizSources
 		.map((source) => [source.summary, source.content].filter(Boolean).join('\n'))
 		.join('\n\n');
-	const rankedPool = extractKeywords(corpus, 80).flatMap((item) => tokenize(item.term));
-	const pool = [...new Set(rankedPool)];
-	const questions: QuizQuestion[] = [];
-	const usedAnswers = new Set<string>();
-	const usedStatements = new Set<string>();
-	const poolOrder = new Map(pool.map((term, index) => [term, index]));
-	const poolSet = new Set(pool);
+	const pool = keyTermsFor(corpus, 90);
 	const communitySourceCount = sources.filter((source) => source.id !== 'own-notes').length;
 	const includesOwnNotes = quizSources.some((source) => source.id === 'own-notes');
 	const sourceDescription = communitySourceCount
 		? `${communitySourceCount} selected community ${communitySourceCount === 1 ? 'note' : 'notes'}${includesOwnNotes ? ' and your attached notes' : ''}`
 		: 'your attached notes';
-	const rankedSources = quizSources.map((source) => {
-		const sentences = splitSentences([source.summary, source.content].filter(Boolean).join('\n'));
-		return sentences
-			.map((sentence, index) => ({
-				sentence,
-				index,
-				focusHits: focus.filter((term) => sentence.toLowerCase().includes(term.toLowerCase())).length,
-				score: sentenceScore(sentence, poolSet, index)
-			}))
-			.filter((candidate) => candidate.score > 0 && candidate.sentence.length >= tier.minSentence)
-			.sort((a, b) => b.focusHits - a.focusHits || b.score - a.score || a.index - b.index)
-			.map((candidate) => ({ ...candidate, source }));
-	});
 
-	const candidates = rankedSources.flat().sort(
-		(a, b) => b.focusHits - a.focusHits || b.score - a.score || a.index - b.index
+	const usedAnswers = new Set<string>();
+	const usedPrompts = new Set<string>();
+	const usedStatements = new Set<string>();
+	const questions = buildMultipleChoice(
+		quizSources,
+		pool,
+		options,
+		mcTarget,
+		usedAnswers,
+		usedPrompts
 	);
 
-	for (const candidate of candidates) {
-		if (questions.length >= mcTarget) break;
-		const statementKey = candidate.sentence.toLowerCase().replace(/\s+/g, ' ').slice(0, 100);
-		if (usedStatements.has(statementKey)) continue;
-
-		const answerTerms = [...new Set(tokenize(candidate.sentence))]
-			.filter((term) => poolSet.has(term) && !usedAnswers.has(term))
-			.sort((a, b) => (poolOrder.get(a) ?? Number.MAX_SAFE_INTEGER) - (poolOrder.get(b) ?? Number.MAX_SAFE_INTEGER));
-		let question: QuizQuestion | undefined;
-
-		for (const answerTerm of answerTerms) {
-			const pattern = new RegExp(`\\b${escapeRegex(answerTerm)}\\b`, 'i');
-			if (!pattern.test(candidate.sentence)) continue;
-
-			const distractors = seededShuffle(
-				pool.filter(
-					(term) =>
-						term !== answerTerm &&
-						term.length >= 3 &&
-						!candidate.sentence.toLowerCase().includes(term.toLowerCase())
-				),
-				hashSeed(`${candidate.sentence}|${answerTerm}`)
-			).slice(0, 3);
-			if (distractors.length === 0) continue;
-
-			const optionTerms = seededShuffle([answerTerm, ...distractors], hashSeed(candidate.sentence));
-			const promptText = candidate.sentence.replace(pattern, '_____');
-			question = {
-				id: `q${questions.length + 1}`,
-				type: 'mc',
-				prompt: `Complete the source statement: “${truncate(promptText, 320)}”`,
-				options: optionTerms.map((term) => term.replace(/\b\w/g, (character) => character.toUpperCase())),
-				answer: optionTerms.indexOf(answerTerm),
-				explanation: `The source says: “${truncate(candidate.sentence, 300)}”`,
-				sourceNoteId: noteIdFor(candidate.source),
-				sourceTitle: candidate.source.title
-			};
-			usedAnswers.add(answerTerm);
-			break;
-		}
-
-		if (question) {
-			usedStatements.add(statementKey);
-			questions.push(question);
-		}
-	}
-
 	questions.push(
-		...buildTrueFalse(quizSources, pool, options, requested - questions.length, usedStatements)
+		...buildTrueFalse(quizSources, options, requested - questions.length, usedStatements)
 	);
 
 	const ordered = seededShuffle(questions, hashSeed(`quiz|${difficulty}|${options.focus ?? ''}`)).map(
@@ -511,9 +951,6 @@ function buildQuiz(
 				Math.max(2, Math.min(5, Math.round(requested / 4)))
 			)
 		: [];
-	if (includeIdentification && identification.length === 0) {
-		throw new Error('These notes do not contain enough distinct, sentence-level information to build identification questions. Choose more detailed notes or add your own context.');
-	}
 	const numberedIdentification = identification.map((question, index) => ({
 		...question,
 		id: `i${index + 1}`
@@ -619,52 +1056,138 @@ function resolveExamSections(options: StudyOptions): string[] {
 	return sections;
 }
 
+interface IdentificationPlan {
+	source: StudySource;
+	sentence: string;
+	answer: string;
+	prompt: string;
+}
+
 function buildIdentification(
 	sources: StudySource[],
 	options: StudyOptions,
 	limit: number
 ): IdentificationQuestion[] {
 	const items: IdentificationQuestion[] = [];
-	const used = new Set<string>();
-	const pool = extractKeywords(combinedText(sources, options), 36).map((item) => item.term);
+	if (limit <= 0) return items;
+	const pool = keyTermsFor(combinedText(sources, options), 60);
+	const usedAnswers = new Set<string>();
+	const usedPrompts = new Set<string>();
 
-	for (const source of sources) {
-		const sentences = splitSentences(source.content);
-		const terms = (source.keywords?.length ? source.keywords : pool).slice(0, 12);
-		for (const term of terms) {
-			if (items.length >= limit) break;
-			const key = term.toLowerCase();
-			if (used.has(key) || term.length < 3) continue;
-			const pattern = new RegExp(`\\b${escapeRegex(term)}\\b`, 'i');
-			const sentence = sentences.find((candidate) => pattern.test(candidate));
-			if (!sentence) continue;
+	const queues = sources.map((source): IdentificationPlan[] => {
+		const plans: IdentificationPlan[] = [];
+		const sentences = sourceSentences(source);
+
+		for (const sentence of sentences) {
+			const match = sentence.match(DEFINITION_PATTERN);
+			if (!match) continue;
+			const subject = cleanSubject(match[1]);
+			if (!subject) continue;
+			const pattern = termPattern(subject);
+			if (!pattern.test(sentence)) continue;
 			const promptText = sentence.replace(pattern, '_____');
 			if (!promptText.includes('_____')) continue;
-			used.add(key);
-			items.push({
-				id: `i${items.length + 1}`,
-				prompt: `Identify the missing term: “${truncate(promptText, 320)}”`,
-				answer: term,
-				explanation: `The source says: “${truncate(sentence, 300)}”`,
-				sourceNoteId: noteIdFor(source),
-				sourceTitle: source.title
+			plans.push({
+				source,
+				sentence,
+				answer: subject,
+				prompt: `Identify the term that completes this definition: “${truncate(promptText, 300)}”`
 			});
 		}
+
+		const terms = source.keywords?.length ? source.keywords : pool;
+		for (const term of terms) {
+			if (!term || term.length < 3) continue;
+			const pattern = termPattern(term);
+			const sentence = sentences.find((candidate) => pattern.test(candidate));
+			if (!sentence) continue;
+			const match = sentence.match(pattern);
+			if (!match) continue;
+			const promptText = sentence.replace(pattern, '_____');
+			if (!promptText.includes('_____')) continue;
+			plans.push({
+				source,
+				sentence,
+				answer: match[0],
+				prompt: `Identify the missing term: “${truncate(promptText, 300)}”`
+			});
+		}
+
+		return plans;
+	});
+
+	while (items.length < limit) {
+		const before = items.length;
+		for (const queue of queues) {
+			if (items.length >= limit) break;
+			let plan: IdentificationPlan | undefined;
+			while (queue.length) {
+				const candidate = queue.shift()!;
+				if (!candidate.answer) continue;
+				if (usedAnswers.has(candidate.answer.toLowerCase())) continue;
+				if (usedPrompts.has(candidate.prompt.toLowerCase())) continue;
+				plan = candidate;
+				break;
+			}
+			if (!plan) continue;
+
+			usedAnswers.add(plan.answer.toLowerCase());
+			usedPrompts.add(plan.prompt.toLowerCase());
+			items.push({
+				id: `i${items.length + 1}`,
+				prompt: plan.prompt,
+				answer: plan.answer,
+				explanation: `The source says: “${truncate(plan.sentence, 300)}”`,
+				sourceNoteId: noteIdFor(plan.source),
+				sourceTitle: plan.source.title
+			});
+		}
+		if (items.length === before) break;
 	}
 
 	return items;
 }
 
-function buildEssays(sources: StudySource[]): EssayPrompt[] {
-	return sources.slice(0, 3).map((source, index) => ({
-		id: `e${index + 1}`,
-		prompt: `Explain the key ideas in “${source.title}” and give one example or application.`,
-		guidance: source.summary
-			? `Use the source summary as a starting point: ${truncate(source.summary, 220)}`
-			: 'Use at least two key ideas from the source and explain them in your own words.',
-		sourceNoteId: noteIdFor(source),
-		sourceTitle: source.title
-	}));
+function buildEssays(sources: StudySource[], options: StudyOptions): EssayPrompt[] {
+	const focus = focusList(options);
+	return sources.slice(0, 3).map((source, index) => {
+		const terms = (source.keywords?.length
+			? source.keywords
+			: extractKeywords(source.content, 8).map((keyword) => keyword.term)
+		)
+			.map((term) => term.trim())
+			.filter((term) => term.length >= 3)
+			.filter((term) => !GENERIC_TERMS.has(term.toLowerCase()) && isUsableTerm(term.toLowerCase()))
+			.filter((term, position, all) => all.indexOf(term) === position)
+			.sort(
+				(a, b) =>
+					b.split(/\s+/).length - a.split(/\s+/).length || b.length - a.length
+			)
+			.slice(0, 4);
+		const [first, second] = terms;
+
+		const prompts = [
+			first && second
+				? `Explain how “${first}” and “${second}” connect in “${source.title}”. Define both terms, then describe the relationship in your own words.`
+				: `Explain the main argument of “${source.title}” and identify the two most important terms a reader must understand.`,
+			first && second
+				? `Compare “${first}” and “${second}” from “${source.title}”. Where do they overlap, and what makes them different?`
+				: `Summarize “${source.title}” in three sentences, then explain why the topic matters for the course.`,
+			first
+				? `A classmate claims that “${first}” is only a definition to memorize. Use ideas from “${source.title}” to explain how it is applied or why that claim is incomplete.`
+				: `Describe a real situation where the ideas in “${source.title}” would matter, and explain what someone should do in that situation.`
+		];
+
+		return {
+			id: `e${index + 1}`,
+			prompt: prompts[index % prompts.length],
+			guidance: source.summary
+				? `Use the source summary as a starting point: ${truncate(source.summary, 220)}`
+				: `Support your answer with at least two details from the source note${focus.length ? `, especially anything related to ${focus.slice(0, 2).join(' and ')}` : ''}.`,
+			sourceNoteId: noteIdFor(source),
+			sourceTitle: source.title
+		};
+	});
 }
 
 function buildExam(sources: StudySource[], options: StudyOptions): StudyResult {
@@ -682,7 +1205,7 @@ function buildExam(sources: StudySource[], options: StudyOptions): StudyResult {
 				Math.max(2, Math.min(8, Math.round((options.questionCount ?? 10) / 3)))
 			)
 		: [];
-	const essays = sections.includes('essay') ? buildEssays(examSources) : [];
+	const essays = sections.includes('essay') ? buildEssays(examSources, examOptions) : [];
 	const requestedTime = Number(options.examTimeLimit ?? 45);
 	const timeLimitMinutes = Number.isFinite(requestedTime)
 		? Math.min(180, Math.max(5, Math.round(requestedTime)))

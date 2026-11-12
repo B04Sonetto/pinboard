@@ -1,5 +1,6 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { answersMatch } from '$lib/utils';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -70,16 +71,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			options: question.options
 		};
 	});
-	const normalizeAnswer = (value: string) =>
-		value
-			.trim()
-			.toLocaleLowerCase()
-			.replace(/[^\p{L}\p{N}\s]/gu, '')
-			.replace(/\s+/g, ' ');
 	const identificationResults = identification.map((question) => {
 		const chosen = body.answers?.[question.id];
-		const answer = normalizeAnswer(question.answer);
-		const correct = typeof chosen === 'string' && normalizeAnswer(chosen) === answer;
+		const correct = typeof chosen === 'string' && answersMatch(chosen, question.answer);
 		if (correct) score += 1;
 		return {
 			id: question.id,

@@ -14,19 +14,40 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const bookmarkedOnly = url.searchParams.get('saved') === '1';
 
 	const taxonomy = await loadTaxonomy(supabase);
-	let query = supabase
+	const query = supabase
 		.from('topics')
 		.select('*, subject:subjects(*, department:departments(*)), notes(count)')
 		.order('name');
-
-	if (q) query = query.ilike('name', `%${q}%`);
 
 	const [topicResult, bookmarks] = await Promise.all([
 		query,
 		savedTopicIds(supabase, locals.user!.id)
 	]);
 
-	let topics = (topicResult.data ?? []) as unknown as TopicRow[];
+	const allTopics = (topicResult.data ?? []) as unknown as TopicRow[];
+	const searchTerm = q.toLowerCase();
+	let topics = searchTerm
+		? allTopics.filter((topic) => {
+				const subject = topic.subject;
+				const departmentRow = subject?.department;
+				return [
+					topic.name,
+					topic.description,
+					subject?.code,
+					subject?.name,
+					departmentRow?.short_name,
+					departmentRow?.name
+				].some((value) => value?.toLowerCase().includes(searchTerm));
+			})
+		: allTopics;
+
+	const matchedTopicCount = topics.length;
+	const departmentCounts: Record<string, number> = {};
+	for (const topic of topics) {
+		const id = topic.subject?.department_id;
+		if (id) departmentCounts[id] = (departmentCounts[id] ?? 0) + 1;
+	}
+
 	if (department) topics = topics.filter((topic) => topic.subject?.department_id === department);
 	if (bookmarkedOnly) topics = topics.filter((topic) => bookmarks.has(topic.id));
 
@@ -41,6 +62,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		bookmarked: [...bookmarks],
 		bookmarkedOnly,
 		filters: { q, department },
+		departmentCounts,
+		matchedTopicCount,
 		totalBookmarked: bookmarks.size
 	};
 };
