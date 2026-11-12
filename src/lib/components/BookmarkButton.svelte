@@ -44,7 +44,10 @@
 				await goto('/login?redirect=' + encodeURIComponent(location.pathname));
 				return;
 			}
-			if (!response.ok) throw new Error('Could not update bookmark');
+			if (!response.ok) {
+				const result = (await response.json().catch(() => null)) as { error?: string } | null;
+				throw new Error(result?.error ?? 'Could not update bookmark');
+			}
 			const data = (await response.json()) as { saved: boolean };
 			saved = data.saved;
 			toast.success(data.saved ? 'Saved to My Collection' : 'Removed from My Collection');
@@ -53,9 +56,13 @@
 			} catch {
 				toast.error('Bookmark saved, but the page could not refresh. Reload to see the latest list.');
 			}
-		} catch {
+		} catch (error) {
 			saved = !next;
-			toast.error('Could not update your saved notes. Try again.');
+			toast.error(
+				error instanceof Error && error.message
+					? error.message
+					: 'Could not update your saved notes. Try again.'
+			);
 		} finally {
 			busy = false;
 		}

@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { bookmarkErrorMessage } from '$lib/server/write-errors';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -25,7 +26,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				{ user_id: locals.user.id, topic_id: topicId },
 				{ onConflict: 'user_id,topic_id', ignoreDuplicates: true }
 			);
-		if (error) return json({ error: 'Could not bookmark this topic.' }, { status: 400 });
+		if (error) return json({ error: bookmarkErrorMessage(error) }, { status: 400 });
 	} else {
 		const { error } = await locals.supabase
 			.from('topic_bookmarks')

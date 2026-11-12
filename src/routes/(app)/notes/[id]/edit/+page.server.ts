@@ -4,6 +4,7 @@ import type { Note, Subject } from '$lib/types';
 import { loadTaxonomy } from '$lib/server/queries';
 import { extractFile, extensionOf, isSupportedFile, MAX_FILE_BYTES, sanitizeFileName } from '$lib/server/extract';
 import { keywordTerms } from '$lib/keywords';
+import { noteWriteErrorMessage } from '$lib/server/write-errors';
 import { safeHttpUrl, stripMarkdown } from '$lib/utils';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -39,6 +40,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 export const actions: Actions = {
 	default: async ({ request, locals, params }) => {
+		if (!locals.user) {
+			return fail(401, { error: 'Your session expired. Sign in again, then resubmit the changes.' });
+		}
 		const form = await request.formData();
 		const department = String(form.get('department_id') ?? '').trim();
 		const program = String(form.get('program_id') ?? '').trim() || null;
@@ -227,8 +231,9 @@ export const actions: Actions = {
 			.maybeSingle();
 
 		if (updateError || !updated) {
+			console.error('[notes/edit] update failed', updateError);
 			if (uploadedPath) await locals.supabase.storage.from('note-files').remove([uploadedPath]);
-			return fail(400, { error: 'Could not save your changes. Please try again.', ...values });
+			return fail(400, { error: noteWriteErrorMessage(updateError, 'update'), ...values });
 		}
 
 		if (current.file_path && current.file_path !== filePath) {

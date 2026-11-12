@@ -4,6 +4,7 @@ import type { Note, Subject } from '$lib/types';
 import { loadTaxonomy } from '$lib/server/queries';
 import { extractFile, extensionOf, isSupportedFile, MAX_FILE_BYTES, sanitizeFileName } from '$lib/server/extract';
 import { keywordTerms } from '$lib/keywords';
+import { noteWriteErrorMessage } from '$lib/server/write-errors';
 import { safeHttpUrl, stripMarkdown } from '$lib/utils';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -44,6 +45,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
+		if (!locals.user) {
+			return fail(401, { error: 'Your session expired. Sign in again, then resubmit the note.' });
+		}
 		const form = await request.formData();
 		const department = String(form.get('department_id') ?? '').trim();
 		const program = String(form.get('program_id') ?? '').trim() || null;
@@ -237,11 +241,10 @@ export const actions: Actions = {
 			.single();
 
 		if (insertError || !inserted) {
+			console.error('[notes/new] insert failed', insertError);
 			if (filePath) await locals.supabase.storage.from('note-files').remove([filePath]);
 			return fail(400, {
-				error: insertError?.message.includes('row-level security')
-					? 'Your session could not save this note. Sign out, sign in again, and retry.'
-					: 'Could not save the note. Please try again.',
+				error: noteWriteErrorMessage(insertError, 'save'),
 				...values
 			});
 		}

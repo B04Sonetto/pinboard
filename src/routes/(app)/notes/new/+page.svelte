@@ -59,6 +59,9 @@
 				!departmentSubjects.some((item) => item.program_id === program)
 		)
 	);
+	const catalogMissing = $derived(
+		data.taxonomy.departments.length === 0 || data.taxonomy.subjects.length === 0
+	);
 	const topics = $derived(data.taxonomy.topics.filter((item) => item.subject_id === subject));
 	let contentText = $state(untrack(() => val('content', data.revision?.content ?? '')));
 	const contentValue = $derived(contentText);
@@ -138,8 +141,11 @@
 	use:enhance={() => {
 		submitting = true;
 		return async ({ update }) => {
-			await update();
-			submitting = false;
+			try {
+				await update();
+			} finally {
+				submitting = false;
+			}
 		};
 	}}
 >
@@ -184,6 +190,14 @@
 			<p class="mt-1 text-sm leading-relaxed text-ink-mid">
 				This creates a fresh submission. The original note stays as-is until a moderator reviews the revision.
 			</p>
+		</div>
+	{/if}
+
+	{#if catalogMissing}
+		<div class="rounded-lg border-[2.5px] border-[#B42318] bg-[#FFF1EF] px-4 py-3 text-sm leading-relaxed text-[#8f1c12]" role="alert">
+			<strong>The subject catalog did not load.</strong> Notes need a department and subject before they can be saved. Ask a
+			moderator to run <code>supabase/setup.sql</code> and <code>supabase/seed.sql</code>, then refresh this page. You can
+			still <a href="/suggestions" class="underline">suggest a subject</a> in the meantime.
 		</div>
 	{/if}
 

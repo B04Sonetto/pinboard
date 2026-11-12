@@ -21,6 +21,10 @@ export async function loadTaxonomy(supabase: SupabaseClient): Promise<Taxonomy> 
 		supabase.from('topics').select('*').order('name')
 	]);
 
+	for (const result of [departments, programs, subjects, topics]) {
+		if (result.error) console.error('[taxonomy] load failed', result.error);
+	}
+
 	return {
 		departments: (departments.data ?? []) as Department[],
 		programs: (programs.data ?? []) as Program[],
